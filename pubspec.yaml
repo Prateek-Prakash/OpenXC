@@ -1,0 +1,17 @@
+name: openxc
+description: OpenXC
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_blue: ^0.7.1
+  badges: ^1.1.1
+  path_provider: ^1.6.5
+  shared_preferences: ^0.5.6+3
+
+flutter:
+  uses-material-design: true
