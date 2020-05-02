@@ -108,6 +108,7 @@ class ConnectionTab extends StatefulWidget {
 
 class _ConnectionTabState extends State<ConnectionTab> {
   static const DEVICE_NAME_PREFIX = "OPENXC-VI-";
+  static const ALT_DEVICE_NAME_PREFIX = "CROSSCHASM";
   static const OPENXC_SERVICE_UUID = "6800D38B-423D-4BDB-BA05-C9276D8453E1";
   static const WRITE_CHARACTERISTIC_UUID = "6800D38B-5262-11E5-885D-FEFF819CDCE2";
   static const NOTIFY_CHARACTERISTIC_UUID = "6800D38B-5262-11E5-885D-FEFF819CDCE3";
@@ -160,6 +161,12 @@ class _ConnectionTabState extends State<ConnectionTab> {
     );
   }
 
+  void _printScanResults(List<ScanResult> scanResults) {
+    for (ScanResult scanResult in scanResults) {
+      print('${scanResult.device.id.toString()} :: ${scanResult.device.name.toUpperCase()}');
+    }
+  }
+
   Future<void> _connectDevice() async {
     await _disconnectDevices();
     await flutterBlue.stopScan();
@@ -167,10 +174,11 @@ class _ConnectionTabState extends State<ConnectionTab> {
 
     // Listen: Scan Results
     scanSub = flutterBlue.scanResults.listen((scanResults) async {
+      _printScanResults(scanResults);
       for (ScanResult scanResult in scanResults) {
         BluetoothDevice foundDevice = scanResult.device;
         String deviceName = foundDevice.name.toUpperCase();
-        if (deviceName.contains(DEVICE_NAME_PREFIX)) {
+        if (deviceName.contains(DEVICE_NAME_PREFIX) || deviceName.contains(ALT_DEVICE_NAME_PREFIX)) {
           await flutterBlue.stopScan();
           await foundDevice.connect();
 
