@@ -108,7 +108,6 @@ class ConnectionTab extends StatefulWidget {
 
 class _ConnectionTabState extends State<ConnectionTab> {
   static const DEVICE_NAME_PREFIX = "OPENXC-VI-";
-  static const ALT_DEVICE_NAME_PREFIX = "CROSSCHASM";
   static const OPENXC_SERVICE_UUID = "6800D38B-423D-4BDB-BA05-C9276D8453E1";
   static const WRITE_CHARACTERISTIC_UUID = "6800D38B-5262-11E5-885D-FEFF819CDCE2";
   static const NOTIFY_CHARACTERISTIC_UUID = "6800D38B-5262-11E5-885D-FEFF819CDCE3";
@@ -176,9 +175,10 @@ class _ConnectionTabState extends State<ConnectionTab> {
     scanSub = flutterBlue.scanResults.listen((scanResults) async {
       _printScanResults(scanResults);
       for (ScanResult scanResult in scanResults) {
-        BluetoothDevice foundDevice = scanResult.device;
-        String deviceName = foundDevice.name.toUpperCase();
-        if (deviceName.contains(DEVICE_NAME_PREFIX) || deviceName.contains(ALT_DEVICE_NAME_PREFIX)) {
+        String advertisementName = scanResult.advertisementData.localName.toUpperCase();
+        if (advertisementName.contains(DEVICE_NAME_PREFIX)) {
+          BluetoothDevice foundDevice = scanResult.device;
+          
           await flutterBlue.stopScan();
           await foundDevice.connect();
 
@@ -188,7 +188,7 @@ class _ConnectionTabState extends State<ConnectionTab> {
           });
 
           setState(() {
-            connectionString = 'CONNECTED • $deviceName';
+            connectionString = 'CONNECTED • $advertisementName';
             connectionIcon = Icons.bluetooth_connected;
             fabString = 'DISCONNECT';
           });
