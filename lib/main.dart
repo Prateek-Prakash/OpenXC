@@ -178,7 +178,7 @@ class _ConnectionTabState extends State<ConnectionTab> {
         String advertisementName = scanResult.advertisementData.localName.toUpperCase();
         if (advertisementName.contains(DEVICE_NAME_PREFIX)) {
           BluetoothDevice foundDevice = scanResult.device;
-          
+
           await flutterBlue.stopScan();
           await foundDevice.connect();
 
@@ -510,7 +510,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 backgroundColor: Colors.transparent,
               ),
               title: Text('Data Source'),
-              subtitle: Text('Bluetooth • USB • Network • Trace'),
+              subtitle: Text('Bluetooth • Trace File'),
               trailing: Icon(Icons.keyboard_arrow_right),
               onTap: () {},
             ),
@@ -523,7 +523,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 backgroundColor: Colors.transparent,
               ),
               title: Text('Recording'),
-              subtitle: Text('Trace Files • Dweet.IO'),
+              subtitle: Text('Trace File • Dweet.IO'),
               trailing: Icon(Icons.keyboard_arrow_right),
               onTap: () {},
             ),
