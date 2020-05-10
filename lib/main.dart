@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:badges/badges.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+
+import 'package:badges/badges.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final ThemeData appTheme = ThemeData(
   brightness: Brightness.dark,
@@ -148,6 +150,7 @@ class _ConnectionTabState extends State<ConnectionTab> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'ConnectionFAB',
         onPressed: () async {
           if (fabString == 'CONNECT') {
             await _connectDevice();
@@ -390,6 +393,7 @@ class _SendTabState extends State<SendTab> {
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: 'SendFAB',
           onPressed: () async {
             if (writeCharacteristic != null) {
               _sendStringData(getDefinedCommand(commandSent));
@@ -495,7 +499,7 @@ class _SettingsTabState extends State<SettingsTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('OpenXC'),
+        title: Text('Settings'),
       ),
       body: ListView(
         children: ListTile.divideTiles(
@@ -525,7 +529,9 @@ class _SettingsTabState extends State<SettingsTab> {
               title: Text('Recording'),
               subtitle: Text('Trace File • Dweet.IO'),
               trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => RecordingSettingsPage()));
+              },
             ),
             ListTile(
               leading: CircleAvatar(
@@ -539,6 +545,101 @@ class _SettingsTabState extends State<SettingsTab> {
               subtitle: Text('Application • Platform'),
               trailing: Icon(Icons.keyboard_arrow_right),
               onTap: () {},
+            ),
+          ],
+        ).toList(),
+      ),
+    );
+  }
+}
+
+class RecordingSettingsPage extends StatefulWidget {
+  @override
+  _RecordingSettingsPageState createState() => _RecordingSettingsPageState();
+}
+
+class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
+  bool _recordTraceFile = false;
+  bool _sendToDweet = false;
+  String _dweetThingName = 'Questionable-Koala';
+
+  void _restorePrefs() async {
+    SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
+    setState(() {
+      _recordTraceFile = sharedPrefs.getBool('RECORD_TRACE_FILE') ?? false;
+      _sendToDweet = sharedPrefs.getBool('SEND_TO_DWEET') ?? false;
+      _dweetThingName = sharedPrefs.getString('DWEET_THING_NAME') ?? 'Questionable-Koala';
+    });
+  }
+
+  void _savePrefs() async {
+    SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
+    sharedPrefs.setBool('RECORD_TRACE_FILE', _recordTraceFile);
+    sharedPrefs.setBool('SEND_TO_DWEET', _sendToDweet);
+    sharedPrefs.setString('DWEET_THING_NAME', _dweetThingName);
+  }
+
+  void _clearPrefs() async {
+    SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
+    await sharedPrefs.clear();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _restorePrefs();
+  }
+
+  @override
+  void dispose() {
+    _savePrefs();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Recording'),
+      ),
+      body: ListView(
+        children: ListTile.divideTiles(
+          context: context,
+          tiles: [
+            SwitchListTile(
+              value: _recordTraceFile,
+              title: Text('Record Trace File'),
+              subtitle: Text(_recordTraceFile ? 'Enabled' : 'Disabled'),
+              onChanged: (value) async {
+                setState(() {
+                  _recordTraceFile = !_recordTraceFile;
+                });
+              },
+            ),
+            SwitchListTile(
+              value: _sendToDweet,
+              title: Text('Send To Dweet.IO'),
+              subtitle: Text(_sendToDweet ? 'Enabled' : 'Disabled'),
+              onChanged: (value) async {
+                setState(() {
+                  _sendToDweet = !_sendToDweet;
+                });
+              },
+            ),
+            ListTile(
+              title: Text('Dweet.IO Thing Name'),
+              subtitle: Text(_dweetThingName),
+              onTap: () {},
+            ),
+            ListTile(
+              title: Text('Reset Settings'),
+              subtitle: Text('Restore Default Values'),
+              onTap: () {
+                setState(() {
+                  _recordTraceFile = false;
+                  _sendToDweet = false;
+                });
+              },
             ),
           ],
         ).toList(),
