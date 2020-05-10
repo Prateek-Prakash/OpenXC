@@ -626,10 +626,13 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
                 });
               },
             ),
-            ListTile(
-              title: Text('Dweet.IO Thing Name'),
-              subtitle: Text(_dweetThingName),
-              onTap: () {},
+            Visibility(
+              visible: _sendToDweet,
+              child: ListTile(
+                title: Text('Dweet.IO Thing Name'),
+                subtitle: Text(_dweetThingName),
+                onTap: () {},
+              ),
             ),
             ListTile(
               title: Text('Reset Settings'),
