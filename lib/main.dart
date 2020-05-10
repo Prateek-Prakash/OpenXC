@@ -607,6 +607,7 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
           context: context,
           tiles: [
             SwitchListTile(
+              activeColor: appTheme.accentColor,
               value: _recordTraceFile,
               title: Text('Record Trace File'),
               subtitle: Text(_recordTraceFile ? 'Enabled' : 'Disabled'),
@@ -617,6 +618,7 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
               },
             ),
             SwitchListTile(
+              activeColor: appTheme.accentColor,
               value: _sendToDweet,
               title: Text('Send To Dweet.IO'),
               subtitle: Text(_sendToDweet ? 'Enabled' : 'Disabled'),
