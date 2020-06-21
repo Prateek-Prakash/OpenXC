@@ -620,7 +620,9 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
             ListTile(
               title: Text('View Trace Files'),
               subtitle: Text('0 Files'),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ViewTraceFilesPage()));
+              },
             ),
             SwitchListTile(
               activeColor: appTheme.accentColor,
@@ -653,6 +655,17 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
             ),
           ],
         ).toList(),
+      ),
+    );
+  }
+}
+
+class ViewTraceFilesPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Trace Files'),
       ),
     );
   }
