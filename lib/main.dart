@@ -260,7 +260,8 @@ class _ConnectionTabState extends State<ConnectionTab> {
         print('JSON Data: $jsonData');
         if (jsonData['command_response'] != null) {
           // Command Response
-          commandResponse = decodedData;
+          JsonEncoder jsonEncoder = JsonEncoder.withIndent('    ');
+          commandResponse = jsonEncoder.convert(jsonData);
         } else {
           // Vehicle Message
           String itemKey = jsonData['name'].toString().toUpperCase().replaceAll('_', ' ');
