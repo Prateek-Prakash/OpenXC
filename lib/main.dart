@@ -620,7 +620,8 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
             ),
             ListTile(
               title: Text('View Trace Files'),
-              subtitle: Text('0 Files'),
+              subtitle: Text('3 Files'),
+              trailing: Icon(Icons.keyboard_arrow_right),
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => ViewTraceFilesPage()));
               },
@@ -667,6 +668,31 @@ class ViewTraceFilesPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Trace Files'),
+      ),
+      body: ListView(
+        children: ListTile.divideTiles(
+          context: context,
+          tiles: [
+            ListTile(
+              title: Text('Agressive Driving'),
+              subtitle: Text('June 17, 2020'),
+              trailing: Icon(Icons.keyboard_arrow_right),
+              onTap: () {},
+            ),
+            ListTile(
+              title: Text('Short Drive'),
+              subtitle: Text('March 5, 2020'),
+              trailing: Icon(Icons.keyboard_arrow_right),
+              onTap: () {},
+            ),
+            ListTile(
+              title: Text('Downtown Detroit'),
+              subtitle: Text('January 18, 2020'),
+              trailing: Icon(Icons.keyboard_arrow_right),
+              onTap: () {},
+            ),
+          ],
+        ).toList(),
       ),
     );
   }
