@@ -617,6 +617,11 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
                 });
               },
             ),
+            ListTile(
+              title: Text('View Trace Files'),
+              subtitle: Text('0 Files'),
+              onTap: () {},
+            ),
             SwitchListTile(
               activeColor: appTheme.accentColor,
               value: _sendToDweet,
