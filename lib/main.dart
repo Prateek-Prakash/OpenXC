@@ -530,7 +530,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 backgroundColor: Colors.transparent,
               ),
               title: Text('Recording'),
-              subtitle: Text('Trace File • Dweet.IO'),
+              subtitle: Text('Trace Files • Dweet.IO'),
               trailing: Icon(Icons.keyboard_arrow_right),
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => RecordingSettingsPage()));
@@ -562,7 +562,6 @@ class RecordingSettingsPage extends StatefulWidget {
 }
 
 class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
-  bool _recordTraceFile = false;
   int _traceFileCount = 0;
   bool _sendToDweet = false;
   String _dweetThingName = 'Questionable-Koala';
@@ -570,7 +569,6 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
   void _restorePrefs() async {
     SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
     setState(() {
-      _recordTraceFile = sharedPrefs.getBool('RECORD_TRACE_FILE') ?? false;
       _traceFileCount = sharedPrefs.getInt('TRACE_FILE_COUNT') ?? 0;
       _sendToDweet = sharedPrefs.getBool('SEND_TO_DWEET') ?? false;
       _dweetThingName = sharedPrefs.getString('DWEET_THING_NAME') ?? 'Questionable-Koala';
@@ -579,7 +577,6 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
 
   void _savePrefs() async {
     SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
-    await sharedPrefs.setBool('RECORD_TRACE_FILE', _recordTraceFile);
     await sharedPrefs.setInt('TRACE_FILE_COUNT', _traceFileCount);
     await sharedPrefs.setBool('SEND_TO_DWEET', _sendToDweet);
     await sharedPrefs.setString('DWEET_THING_NAME', _dweetThingName);
@@ -612,17 +609,6 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
         children: ListTile.divideTiles(
           context: context,
           tiles: [
-            SwitchListTile(
-              activeColor: appTheme.accentColor,
-              value: _recordTraceFile,
-              title: Text('Record Trace File'),
-              subtitle: Text(_recordTraceFile ? 'Enabled' : 'Disabled'),
-              onChanged: (value) async {
-                setState(() {
-                  _recordTraceFile = !_recordTraceFile;
-                });
-              },
-            ),
             ListTile(
               title: Text('View Trace Files'),
               subtitle: Text('$_traceFileCount Files'),
@@ -663,7 +649,6 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
               subtitle: Text('Restore Default Values'),
               onTap: () {
                 setState(() {
-                  _recordTraceFile = false;
                   _sendToDweet = false;
                 });
               },
