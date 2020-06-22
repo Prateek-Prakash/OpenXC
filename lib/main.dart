@@ -688,9 +688,10 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
     traceFileDir.listSync().forEach((fileSystemEntity) {
       String filePath = fileSystemEntity.path;
       String fileName = filePath.split('/').last;
+      DateTime lastModified = File(filePath).lastModifiedSync();
       ListTile traceFileTile = ListTile(
         title: Text(fileName),
-        subtitle: Text(DateTime.now().toString()),
+        subtitle: Text(lastModified.toString()),
         trailing: Icon(Icons.chevron_right),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => TraceFileViewerPage()));
