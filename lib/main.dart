@@ -668,7 +668,7 @@ class TraceFilesPage extends StatefulWidget {
 class _TraceFilesPageState extends State<TraceFilesPage> {
   List<ListTile> _traceFileTiles = [];
 
-  Future<void> _loadTraceFileTiles(BuildContext context, bool createSamples) async {
+  Future<void> _loadTraceFileTiles(BuildContext context) async {
     _traceFileTiles.clear();
 
     Directory documentsDir = await getApplicationDocumentsDirectory();
@@ -676,14 +676,6 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
 
     String traceFileDirPath = '$documentsDirPath/Trace-Files';
     Directory traceFileDir = Directory(traceFileDirPath);
-
-    // Only For Testing... Delete After
-    if (createSamples) {
-      traceFileDir.deleteSync(recursive: true);
-      File('$traceFileDirPath/Agressive-Driving.json').createSync(recursive: true);
-      File('$traceFileDirPath/Short-Drive.json').createSync(recursive: true);
-      File('$traceFileDirPath/Downtown-Detroit.json').createSync(recursive: true);
-    }
 
     traceFileDir.listSync().forEach((fileSystemEntity) {
       String filePath = fileSystemEntity.path;
@@ -698,7 +690,7 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
         },
         onLongPress: () {
           File(filePath).deleteSync();
-          _loadTraceFileTiles(context, false);
+          _loadTraceFileTiles(context);
         },
       );
       setState(() {
@@ -710,7 +702,7 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
   @override
   void initState() {
     super.initState();
-    _loadTraceFileTiles(context, true);
+    _loadTraceFileTiles(context);
   }
 
   @override
