@@ -683,7 +683,9 @@ class TraceFilesPage extends StatefulWidget {
 class _TraceFilesPageState extends State<TraceFilesPage> {
   List<ListTile> _traceFileTiles = [];
 
-  Future<void> _loadTraceFileTiles(BuildContext context) async {
+  Future<void> _loadTraceFileTiles(BuildContext context, bool createSamples) async {
+    _traceFileTiles.clear();
+
     Directory documentsDir = await getApplicationDocumentsDirectory();
     String documentsDirPath = documentsDir.path;
 
@@ -691,10 +693,12 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
     Directory traceFileDir = Directory(traceFileDirPath);
 
     // Only For Testing... Delete After
-    traceFileDir.deleteSync(recursive: true);
-    File('$traceFileDirPath/Agressive-Driving.json').createSync(recursive: true);
-    File('$traceFileDirPath/Short-Drive.json').createSync(recursive: true);
-    File('$traceFileDirPath/Downtown-Detroit.json').createSync(recursive: true);
+    if (createSamples) {
+      traceFileDir.deleteSync(recursive: true);
+      File('$traceFileDirPath/Agressive-Driving.json').createSync(recursive: true);
+      File('$traceFileDirPath/Short-Drive.json').createSync(recursive: true);
+      File('$traceFileDirPath/Downtown-Detroit.json').createSync(recursive: true);
+    }
 
     traceFileDir.listSync().forEach((fileSystemEntity) {
       String filePath = fileSystemEntity.path;
@@ -706,6 +710,10 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => TraceFileViewerPage()));
         },
+        onLongPress: () {
+          File(filePath).deleteSync();
+          _loadTraceFileTiles(context, false);
+        },
       );
       setState(() {
         _traceFileTiles.add(traceFileTile);
@@ -716,7 +724,7 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
   @override
   void initState() {
     super.initState();
-    _loadTraceFileTiles(context);
+    _loadTraceFileTiles(context, true);
   }
 
   @override
@@ -724,9 +732,11 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Trace Files'),
-        leading: BackButton(onPressed: () {
-          Navigator.pop(context, _traceFileTiles.length);
-        },),
+        leading: BackButton(
+          onPressed: () {
+            Navigator.pop(context, _traceFileTiles.length);
+          },
+        ),
       ),
       body: ListView(
         children: ListTile.divideTiles(
