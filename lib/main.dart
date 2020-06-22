@@ -121,11 +121,16 @@ class _ConnectionTabState extends State<ConnectionTab> {
   StreamSubscription deviceStateSub;
   StreamSubscription readSub;
 
-  String connectionString = 'DISCONNECTED';
-  IconData connectionIcon = Icons.bluetooth_disabled;
-  String fabString = 'CONNECT';
+  String connStatusString = 'DISCONNECTED';
+  String connButtonString = 'CONNECT';
+
+  String recStatusString = 'NOT RECORDING';
+  String recButtonString = 'START';
 
   List<int> dataBuffer = List<int>();
+
+  File _traceFile;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,27 +145,86 @@ class _ConnectionTabState extends State<ConnectionTab> {
               child: ListTile(
                 leading: CircleAvatar(
                   child: Icon(
-                    connectionIcon,
-                    color: Colors.white,
+                    Icons.bluetooth,
+                    color: appTheme.cardColor,
                   ),
-                  backgroundColor: Colors.transparent,
+                  backgroundColor: Colors.white,
                 ),
-                title: Text(connectionString),
+                title: Text(connStatusString),
+                trailing: ButtonTheme(
+                  minWidth: 115.0,
+                  child: RaisedButton(
+                    color: appTheme.accentColor,
+                    child: Text(
+                      connButtonString,
+                      style: TextStyle(color: appTheme.primaryColor),
+                    ),
+                    onPressed: () async {
+                      if (connButtonString == 'CONNECT') {
+                        await _connectDevice();
+                      } else {
+                        await _disconnectDevices();
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: CircleAvatar(
+                  child: Icon(
+                    Icons.save,
+                    color: appTheme.cardColor,
+                  ),
+                  backgroundColor: Colors.white,
+                ),
+                title: Text(recStatusString),
+                trailing: ButtonTheme(
+                  minWidth: 115.0,
+                  child: RaisedButton(
+                    color: appTheme.accentColor,
+                    child: Text(
+                      recButtonString,
+                      style: TextStyle(color: appTheme.primaryColor),
+                    ),
+                    onPressed: () async {
+                      if (recButtonString == 'START') {
+                        // Start Recording
+                        setState(() {
+                          recStatusString = 'RECORDING';
+                          recButtonString = 'STOP';
+                        });
+
+                        Directory documentsDir = await getApplicationDocumentsDirectory();
+                        Directory tempDir = documentsDir.createTempSync();
+                        String tempDirPath = tempDir.path;
+
+                        _traceFile = File('$tempDirPath/Temp-Trace.json');
+                        _traceFile.createSync(recursive: true);
+                      } else {
+                        // Stop & Save Recording
+                        setState(() {
+                          recStatusString = 'NOT RECORDING';
+                          recButtonString = 'START';
+                        });
+
+                        Directory documentsDir = await getApplicationDocumentsDirectory();
+                        String documentsDirPath = documentsDir.path;
+
+                        String traceFilePath = '$documentsDirPath/Trace-Files/Temp-Trace.json';
+
+                        // Increase TRACE_FILE_COUNT Preference
+
+                        _traceFile.renameSync(traceFilePath);
+                      }
+                    },
+                  ),
+                ),
               ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'ConnectionFAB',
-        onPressed: () async {
-          if (fabString == 'CONNECT') {
-            await _connectDevice();
-          } else {
-            await _disconnectDevices();
-          }
-        },
-        label: Text(fabString),
       ),
     );
   }
@@ -193,10 +257,10 @@ class _ConnectionTabState extends State<ConnectionTab> {
           });
 
           setState(() {
-            connectionString = 'CONNECTED • $advertisementName';
-            connectionIcon = Icons.bluetooth_connected;
-            fabString = 'DISCONNECT';
+            connStatusString = advertisementName;
+            connButtonString = 'DISCONNECT';
           });
+
           List<BluetoothService> bluetoothServices = await foundDevice.discoverServices();
           for (BluetoothService bluetoothService in bluetoothServices) {
             if (bluetoothService.uuid.toString().toUpperCase() == OPENXC_SERVICE_UUID) {
@@ -244,9 +308,8 @@ class _ConnectionTabState extends State<ConnectionTab> {
     writeCharacteristic = null;
     notifyCharacteristic = null;
     setState(() {
-      connectionString = 'DISCONNECTED';
-      connectionIcon = Icons.bluetooth_disabled;
-      fabString = 'CONNECT';
+      connStatusString = 'DISCONNECTED';
+      connButtonString = 'CONNECT';
     });
   }
 
