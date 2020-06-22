@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:badges/badges.dart';
+import 'package:flutter_blue/flutter_blue.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final ThemeData appTheme = ThemeData(
@@ -561,6 +563,7 @@ class RecordingSettingsPage extends StatefulWidget {
 
 class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
   bool _recordTraceFile = false;
+  int _traceFileCount = 0;
   bool _sendToDweet = false;
   String _dweetThingName = 'Questionable-Koala';
 
@@ -568,6 +571,7 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
     SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
     setState(() {
       _recordTraceFile = sharedPrefs.getBool('RECORD_TRACE_FILE') ?? false;
+      _traceFileCount = sharedPrefs.getInt('TRACE_FILE_COUNT') ?? 0;
       _sendToDweet = sharedPrefs.getBool('SEND_TO_DWEET') ?? false;
       _dweetThingName = sharedPrefs.getString('DWEET_THING_NAME') ?? 'Questionable-Koala';
     });
@@ -575,9 +579,10 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
 
   void _savePrefs() async {
     SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
-    sharedPrefs.setBool('RECORD_TRACE_FILE', _recordTraceFile);
-    sharedPrefs.setBool('SEND_TO_DWEET', _sendToDweet);
-    sharedPrefs.setString('DWEET_THING_NAME', _dweetThingName);
+    await sharedPrefs.setBool('RECORD_TRACE_FILE', _recordTraceFile);
+    await sharedPrefs.setInt('TRACE_FILE_COUNT', _traceFileCount);
+    await sharedPrefs.setBool('SEND_TO_DWEET', _sendToDweet);
+    await sharedPrefs.setString('DWEET_THING_NAME', _dweetThingName);
   }
 
   void _clearPrefs() async {
@@ -620,10 +625,18 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
             ),
             ListTile(
               title: Text('View Trace Files'),
-              subtitle: Text('3 Files'),
+              subtitle: Text('$_traceFileCount Files'),
               trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ViewTraceFilesPage()));
+              onTap: () async {
+                int fileCount = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TraceFilesPage(),
+                  ),
+                );
+                setState(() {
+                  _traceFileCount = fileCount;
+                });
               },
             ),
             SwitchListTile(
@@ -662,37 +675,78 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
   }
 }
 
-class ViewTraceFilesPage extends StatelessWidget {
+class TraceFilesPage extends StatefulWidget {
+  @override
+  _TraceFilesPageState createState() => _TraceFilesPageState();
+}
+
+class _TraceFilesPageState extends State<TraceFilesPage> {
+  List<ListTile> _traceFileTiles = [];
+
+  Future<void> _loadTraceFileTiles(BuildContext context) async {
+    Directory documentsDir = await getApplicationDocumentsDirectory();
+    String documentsDirPath = documentsDir.path;
+
+    String traceFileDirPath = '$documentsDirPath/Trace-Files';
+    Directory traceFileDir = Directory(traceFileDirPath);
+
+    // Only For Testing... Delete After
+    traceFileDir.deleteSync(recursive: true);
+    File('$traceFileDirPath/Agressive-Driving.json').createSync(recursive: true);
+    File('$traceFileDirPath/Short-Drive.json').createSync(recursive: true);
+    File('$traceFileDirPath/Downtown-Detroit.json').createSync(recursive: true);
+
+    traceFileDir.listSync().forEach((fileSystemEntity) {
+      String filePath = fileSystemEntity.path;
+      String fileName = filePath.split('/').last;
+      ListTile traceFileTile = ListTile(
+        title: Text(fileName),
+        subtitle: Text(DateTime.now().toString()),
+        trailing: Icon(Icons.chevron_right),
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => TraceFileViewerPage()));
+        },
+      );
+      setState(() {
+        _traceFileTiles.add(traceFileTile);
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTraceFileTiles(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Trace Files'),
+        leading: BackButton(onPressed: () {
+          Navigator.pop(context, _traceFileTiles.length);
+        },),
       ),
       body: ListView(
         children: ListTile.divideTiles(
           context: context,
-          tiles: [
-            ListTile(
-              title: Text('Agressive Driving'),
-              subtitle: Text('June 17, 2020'),
-              trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {},
-            ),
-            ListTile(
-              title: Text('Short Drive'),
-              subtitle: Text('March 5, 2020'),
-              trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {},
-            ),
-            ListTile(
-              title: Text('Downtown Detroit'),
-              subtitle: Text('January 18, 2020'),
-              trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {},
-            ),
-          ],
+          tiles: _traceFileTiles,
         ).toList(),
+      ),
+    );
+  }
+}
+
+class TraceFileViewerPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Trace File Viewer'),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(5.0),
       ),
     );
   }
