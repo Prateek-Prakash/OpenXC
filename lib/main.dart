@@ -582,11 +582,6 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
     await sharedPrefs.setString('DWEET_THING_NAME', _dweetThingName);
   }
 
-  void _clearPrefs() async {
-    SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
-    await sharedPrefs.clear();
-  }
-
   @override
   void initState() {
     super.initState();
