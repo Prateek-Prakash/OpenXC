@@ -433,7 +433,7 @@ class _DashboardTabState extends State<DashboardTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('OpenXC'),
+        title: Text('Dashboard'),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.clear_all),
@@ -790,9 +790,11 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
                     builder: (context) => TraceFilesPage(),
                   ),
                 );
-                setState(() {
-                  _traceFileCount = fileCount;
-                });
+                if (fileCount != null) {
+                  setState(() {
+                    _traceFileCount = fileCount;
+                  });
+                }
               },
             ),
             SwitchListTile(
@@ -893,11 +895,22 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
           },
         ),
       ),
-      body: ListView(
-        children: ListTile.divideTiles(
-          context: context,
-          tiles: _traceFileTiles,
-        ).toList(),
+      body: Visibility(
+        visible: _traceFileTiles.length == 0,
+        child: Center(
+          child: Text(
+            '• NO TRACE FILES •',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        replacement: ListView(
+          children: ListTile.divideTiles(
+            context: context,
+            tiles: _traceFileTiles,
+          ).toList(),
+        ),
       ),
     );
   }
