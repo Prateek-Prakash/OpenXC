@@ -130,6 +130,7 @@ class _ConnectionTabState extends State<ConnectionTab> {
   List<int> dataBuffer = List<int>();
 
   File _traceFile;
+  IOSink _traceFileSink;
   Directory _tempDir;
   bool _isRecording = false;
 
@@ -206,8 +207,7 @@ class _ConnectionTabState extends State<ConnectionTab> {
                         _traceFile = File('$tempDirPath/Temp-Trace.json');
                         _traceFile.createSync(recursive: true);
 
-                        // Test Writing File
-                        _traceFile.writeAsStringSync('Test\nTest\nTest\nTest\nTest');
+                        _traceFileSink = _traceFile.openWrite(mode: FileMode.append);
                       } else {
                         // Stop & Save Recording
                         _isRecording = false;
@@ -215,6 +215,8 @@ class _ConnectionTabState extends State<ConnectionTab> {
                           recStatusString = 'NOT RECORDING';
                           recButtonString = 'START';
                         });
+
+                        _traceFileSink.close();
 
                         Directory documentsDir = await getApplicationDocumentsDirectory();
                         String documentsDirPath = documentsDir.path;
@@ -387,6 +389,10 @@ class _ConnectionTabState extends State<ConnectionTab> {
           commandResponse = jsonEncoder.convert(jsonData);
         } else {
           // Vehicle Message
+          if (_isRecording) {
+            _traceFile.writeAsStringSync(decodedData, mode: FileMode.append);
+            _traceFileSink.writeln(decodedData);
+          }
           String itemKey = jsonData['name'].toString().toUpperCase().replaceAll('_', ' ');
           String itemValue = jsonData['value'].toString().toUpperCase().replaceAll('_', ' ');
           if (jsonData['event'] != null) {
@@ -861,9 +867,11 @@ class TraceFileViewerPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(filePath.split('/').last),
       ),
-      body: Container(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(5.0),
-        child: Text(fileContent),
+        child: Container(
+          child: Text(fileContent),
+        ),
       ),
     );
   }
