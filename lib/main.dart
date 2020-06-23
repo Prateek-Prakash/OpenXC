@@ -314,6 +314,9 @@ class _ConnectionTabState extends State<ConnectionTab> {
           // Listen: State Changes
           deviceStateSub = foundDevice.state.listen((deviceState) async {
             print('Device State: ${deviceState.toString()}');
+            if (deviceState == BluetoothDeviceState.disconnected) {
+              await _connectDevice();
+            }
           });
 
           setState(() {
