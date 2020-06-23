@@ -130,6 +130,7 @@ class _ConnectionTabState extends State<ConnectionTab> {
   List<int> dataBuffer = List<int>();
 
   File _traceFile;
+  Directory _tempDir;
 
   @override
   Widget build(BuildContext context) {
@@ -197,8 +198,8 @@ class _ConnectionTabState extends State<ConnectionTab> {
                         });
 
                         Directory documentsDir = await getApplicationDocumentsDirectory();
-                        Directory tempDir = documentsDir.createTempSync();
-                        String tempDirPath = tempDir.path;
+                        _tempDir = documentsDir.createTempSync();
+                        String tempDirPath = _tempDir.path;
 
                         _traceFile = File('$tempDirPath/Temp-Trace.json');
                         _traceFile.createSync(recursive: true);
@@ -217,6 +218,8 @@ class _ConnectionTabState extends State<ConnectionTab> {
                         // Increase TRACE_FILE_COUNT Preference
 
                         _traceFile.renameSync(traceFilePath);
+
+                        _tempDir.deleteSync(recursive: true);
                       }
                     },
                   ),
@@ -727,7 +730,9 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
   List<ListTile> _traceFileTiles = [];
 
   Future<void> _loadTraceFileTiles(BuildContext context) async {
-    _traceFileTiles.clear();
+    setState(() {
+      _traceFileTiles.clear();
+    });
 
     Directory documentsDir = await getApplicationDocumentsDirectory();
     String documentsDirPath = documentsDir.path;
