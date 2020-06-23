@@ -216,6 +216,10 @@ class _ConnectionTabState extends State<ConnectionTab> {
                         String traceFilePath = '$documentsDirPath/Trace-Files/Temp-Trace.json';
 
                         // Increase TRACE_FILE_COUNT Preference
+                        SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
+                        int currFileCount = sharedPrefs.getInt('TRACE_FILE_COUNT');
+                        currFileCount++;
+                        await sharedPrefs.setInt('TRACE_FILE_COUNT', currFileCount);
 
                         _traceFile.renameSync(traceFilePath);
 
@@ -636,6 +640,7 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
     SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
     setState(() {
       _traceFileCount = sharedPrefs.getInt('TRACE_FILE_COUNT') ?? 0;
+      print(_traceFileCount);
       _sendToDweet = sharedPrefs.getBool('SEND_TO_DWEET') ?? false;
       _dweetThingName = sharedPrefs.getString('DWEET_THING_NAME') ?? 'Questionable-Koala';
     });
