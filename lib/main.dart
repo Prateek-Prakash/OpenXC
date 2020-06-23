@@ -131,6 +131,7 @@ class _ConnectionTabState extends State<ConnectionTab> {
 
   File _traceFile;
   Directory _tempDir;
+  bool _isRecording = false;
 
   @override
   Widget build(BuildContext context) {
@@ -190,8 +191,9 @@ class _ConnectionTabState extends State<ConnectionTab> {
                       style: TextStyle(color: appTheme.primaryColor),
                     ),
                     onPressed: () async {
-                      if (recButtonString == 'START') {
+                      if (!_isRecording) {
                         // Start Recording
+                        _isRecording = true;
                         setState(() {
                           recStatusString = 'RECORDING';
                           recButtonString = 'STOP';
@@ -205,6 +207,7 @@ class _ConnectionTabState extends State<ConnectionTab> {
                         _traceFile.createSync(recursive: true);
                       } else {
                         // Stop & Save Recording
+                        _isRecording = false;
                         setState(() {
                           recStatusString = 'NOT RECORDING';
                           recButtonString = 'START';
@@ -213,17 +216,62 @@ class _ConnectionTabState extends State<ConnectionTab> {
                         Directory documentsDir = await getApplicationDocumentsDirectory();
                         String documentsDirPath = documentsDir.path;
 
-                        String traceFilePath = '$documentsDirPath/Trace-Files/Temp-Trace.json';
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) {
+                            String fileName;
+                            return AlertDialog(
+                              title: Text('Save Trace File'),
+                              content: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      autofocus: true,
+                                      autocorrect: false,
+                                      decoration: InputDecoration(
+                                        labelText: 'File Name',
+                                        hintText: 'Sample-File-Name',
+                                      ),
+                                      onChanged: (value) {
+                                        fileName = value;
+                                      },
+                                    ),
+                                  )
+                                ],
+                              ),
+                              actions: [
+                                FlatButton(
+                                  child: Text('CANCEL'),
+                                  onPressed: () {
+                                    _tempDir.deleteSync(recursive: true);
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                FlatButton(
+                                  child: Text('SAVE'),
+                                  onPressed: () async {
+                                    if (fileName.length > 0) {
+                                      String traceFilePath = '$documentsDirPath/Trace-Files/$fileName.json';
+                                      // Increase TRACE_FILE_COUNT Preference
+                                      if (!File(traceFilePath).existsSync()) {
+                                        SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
+                                        int currFileCount = sharedPrefs.getInt('TRACE_FILE_COUNT');
+                                        currFileCount++;
+                                        await sharedPrefs.setInt('TRACE_FILE_COUNT', currFileCount);
+                                      }
 
-                        // Increase TRACE_FILE_COUNT Preference
-                        SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
-                        int currFileCount = sharedPrefs.getInt('TRACE_FILE_COUNT');
-                        currFileCount++;
-                        await sharedPrefs.setInt('TRACE_FILE_COUNT', currFileCount);
+                                      _traceFile.renameSync(traceFilePath);
 
-                        _traceFile.renameSync(traceFilePath);
-
-                        _tempDir.deleteSync(recursive: true);
+                                      _tempDir.deleteSync(recursive: true);
+                                      Navigator.of(context).pop();
+                                    }
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       }
                     },
                   ),
@@ -640,7 +688,6 @@ class _RecordingSettingsPageState extends State<RecordingSettingsPage> {
     SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
     setState(() {
       _traceFileCount = sharedPrefs.getInt('TRACE_FILE_COUNT') ?? 0;
-      print(_traceFileCount);
       _sendToDweet = sharedPrefs.getBool('SEND_TO_DWEET') ?? false;
       _dweetThingName = sharedPrefs.getString('DWEET_THING_NAME') ?? 'Questionable-Koala';
     });
