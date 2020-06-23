@@ -646,7 +646,14 @@ class _SettingsTabState extends State<SettingsTab> {
               title: Text('Data Source'),
               subtitle: Text('Bluetooth • Trace File'),
               trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DataSourceSettingsPage(),
+                  ),
+                );
+              },
             ),
             ListTile(
               leading: CircleAvatar(
@@ -660,7 +667,12 @@ class _SettingsTabState extends State<SettingsTab> {
               subtitle: Text('Trace Files • Dweet.IO'),
               trailing: Icon(Icons.keyboard_arrow_right),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => RecordingSettingsPage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RecordingSettingsPage(),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -674,6 +686,39 @@ class _SettingsTabState extends State<SettingsTab> {
               title: Text('About'),
               subtitle: Text('Application • Platform'),
               trailing: Icon(Icons.keyboard_arrow_right),
+              onTap: () {},
+            ),
+          ],
+        ).toList(),
+      ),
+    );
+  }
+}
+
+class DataSourceSettingsPage extends StatefulWidget {
+  @override
+  _DataSourceSettingsPageState createState() => _DataSourceSettingsPageState();
+}
+
+class _DataSourceSettingsPageState extends State<DataSourceSettingsPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Data Source'),
+      ),
+      body: ListView(
+        children: ListTile.divideTiles(
+          context: context,
+          tiles: [
+            ListTile(
+              title: Text('Select Data Source'),
+              subtitle: Text('Bluetooth'),
+              onTap: () {},
+            ),
+            ListTile(
+              title: Text('Reset Settings'),
+              subtitle: Text('Restore Default Values'),
               onTap: () {},
             ),
           ],
