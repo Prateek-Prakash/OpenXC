@@ -205,6 +205,9 @@ class _ConnectionTabState extends State<ConnectionTab> {
 
                         _traceFile = File('$tempDirPath/Temp-Trace.json');
                         _traceFile.createSync(recursive: true);
+
+                        // Test Writing File
+                        _traceFile.writeAsStringSync('Test\nTest\nTest\nTest\nTest');
                       } else {
                         // Stop & Save Recording
                         _isRecording = false;
@@ -801,7 +804,12 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
         subtitle: Text(lastModified.toString()),
         trailing: Icon(Icons.chevron_right),
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => TraceFileViewerPage()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TraceFileViewerPage(filePath: filePath),
+            ),
+          );
         },
         onLongPress: () {
           File(filePath).deleteSync();
@@ -842,14 +850,20 @@ class _TraceFilesPageState extends State<TraceFilesPage> {
 }
 
 class TraceFileViewerPage extends StatelessWidget {
+  final String filePath;
+
+  TraceFileViewerPage({this.filePath});
+
   @override
   Widget build(BuildContext context) {
+    String fileContent = File(filePath).readAsStringSync();
     return Scaffold(
       appBar: AppBar(
-        title: Text('Trace File Viewer'),
+        title: Text(filePath.split('/').last),
       ),
       body: Container(
         padding: EdgeInsets.all(5.0),
+        child: Text(fileContent),
       ),
     );
   }
