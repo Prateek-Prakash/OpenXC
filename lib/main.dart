@@ -85,19 +85,19 @@ class _OpenXCState extends State<OpenXC> {
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.bluetooth),
-            title: Text('Connection'),
+            label: 'Connection',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.storage),
-            title: Text('Dashboard'),
+            label: 'Dashboard',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.unarchive),
-            title: Text('Send'),
+            label: 'Send',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            title: Text('Settings'),
+            label: 'Settings',
           ),
         ],
       ),
@@ -291,7 +291,9 @@ class _ConnectionTabState extends State<ConnectionTab> {
 
   void _printScanResults(List<ScanResult> scanResults) {
     for (ScanResult scanResult in scanResults) {
-      print('${scanResult.device.id.toString()} :: ${scanResult.device.name.toUpperCase()}');
+      if (scanResult.advertisementData.localName.isNotEmpty) {
+        print('${scanResult.device.id.toString()} :: ${scanResult.advertisementData.localName.toUpperCase()}');
+      }
     }
   }
 
@@ -470,7 +472,7 @@ class _DashboardTabState extends State<DashboardTab> {
                       trailing: Badge(
                         toAnimate: false,
                         shape: BadgeShape.square,
-                        borderRadius: 5.0,
+                        borderRadius: BorderRadius.circular(5.0),
                         badgeColor: appTheme.accentColor,
                         badgeContent: Text(
                           dashboardCounts[orderedKeys[index]].toString(),

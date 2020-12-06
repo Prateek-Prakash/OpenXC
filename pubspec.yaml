@@ -8,10 +8,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_blue: ^0.7.2
-  badges: ^1.1.1
-  path_provider: ^1.6.11
-  shared_preferences: ^0.5.7+1
+  flutter_blue: ^0.7.3
+  badges: ^1.1.4
+  path_provider: ^1.6.24
+  shared_preferences: ^0.5.12+4
 
 flutter:
   uses-material-design: true
