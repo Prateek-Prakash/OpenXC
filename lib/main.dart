@@ -14,7 +14,7 @@ class AppThemeConfig {
     visualDensity: VisualDensity.adaptivePlatformDensity,
     brightness: Brightness.dark,
     primaryColor: Color(0xFF181A20),
-    accentColor: Color(0xFF7678ED),
+    accentColor: Color(0xFFCBA6FC),
     canvasColor: Color(0xFF181A20),
     cardColor: Color(0xFF262A34),
     dialogBackgroundColor: Color(0xFF262A34),
@@ -129,8 +129,107 @@ class ConnectionTab extends HookWidget {
         title: Text('OpenXC'),
         centerTitle: true,
       ),
-      body: Center(
-        child: Text('CONNECTION'),
+      body: Container(
+        padding: EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              child: Container(
+                padding: EdgeInsets.all(5.0),
+                child: ListTile(
+                  title: Text(
+                    'Data Source',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  subtitle: Text(
+                    'Bluetooth Low Energy',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 10.0),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              child: Container(
+                padding: EdgeInsets.all(5.0),
+                child: ListTile(
+                  title: Text(
+                    'Connection Status',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  subtitle: Text(
+                    'Connected',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFF9DE089)),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 10.0),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              child: Container(
+                padding: EdgeInsets.all(5.0),
+                child: ListTile(
+                  title: Text(
+                    'Connection Status',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  subtitle: Text(
+                    'Disconnected',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFFDF927B)),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 10.0),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              child: Container(
+                padding: EdgeInsets.all(5.0),
+                child: ListTile(
+                  title: Text(
+                    'VI Device Name',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  subtitle: Text(
+                    'Disconnected',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 10.0),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              child: Container(
+                padding: EdgeInsets.all(5.0),
+                child: ListTile(
+                  title: Text(
+                    'Messages Received',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  subtitle: Text(
+                    '2020',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
