@@ -127,7 +127,9 @@ class BNavigationConfig {
 class ConnectionTab extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final connectionStatusIndex = useProvider(ConnectionConfig().connectionStatusIndex);
+    final dataSourceProvider = useProvider(ConnectionConfig().dataSourceProvider);
+
+    final connectionStatusIndex = useProvider(ConnectionConfig().connectionStatusIndexProvider);
 
     String connectionStatus = ConnectionConfig().connectionStatuses[connectionStatusIndex.state];
     Color connectionStatusColor = ConnectionConfig().connectionStatusColors[connectionStatusIndex.state];
@@ -154,7 +156,7 @@ class ConnectionTab extends HookWidget {
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                   subtitle: Text(
-                    'Bluetooth Low Energy',
+                    dataSourceProvider.state,
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
                   ),
                 ),
@@ -183,7 +185,7 @@ class ConnectionTab extends HookWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.ac_unit_outlined),
+        child: Icon(Icons.ac_unit),
         onPressed: () {
           if (connectionStatusIndex.state == 0) {
             connectionStatusIndex.state = 1;
@@ -201,13 +203,13 @@ class ConnectionConfig {
   factory ConnectionConfig() => _instance ??= ConnectionConfig._internal();
   ConnectionConfig._internal();
 
-  final _dataSourceProvider = StateProvider<String>((ref) => 'Bluetooth Low Energy');
+  final _dataSourceProvider = StateProvider<String>((ref) => 'Bluetooth Low Energy (BLE)');
 
   StateProvider<String> get dataSourceProvider => _dataSourceProvider;
 
-  final _connectionStatusIndex = StateProvider<int>((ref) => 0);
+  final _connectionStatusIndexProvider = StateProvider<int>((ref) => 0);
 
-  StateProvider<int> get connectionStatusIndex => _connectionStatusIndex;
+  StateProvider<int> get connectionStatusIndexProvider => _connectionStatusIndexProvider;
 
   final _connectionStatuses = [
     'Disconnected',
@@ -270,8 +272,53 @@ class SettingsTab extends HookWidget {
         title: Text('OpenXC'),
         centerTitle: true,
       ),
-      body: Center(
-        child: Text('SETTINGS'),
+      body: ListView(
+        children: ListTile.divideTiles(
+          context: context,
+          tiles: [
+            ListTile(
+              leading: CircleAvatar(
+                child: Icon(
+                  Icons.account_tree,
+                  color: Colors.white,
+                ),
+                backgroundColor: Colors.transparent,
+              ),
+              title: Text('Connection'),
+              subtitle: Text('BLE • USB • Trace File'),
+              trailing: Icon(Icons.keyboard_arrow_right),
+              onTap: () {
+              },
+            ),
+            ListTile(
+              leading: CircleAvatar(
+                child: Icon(
+                  Icons.save,
+                  color: Colors.white,
+                ),
+                backgroundColor: Colors.transparent,
+              ),
+              title: Text('Recording'),
+              subtitle: Text('Trace Files • Dweet.IO'),
+              trailing: Icon(Icons.keyboard_arrow_right),
+              onTap: () {
+              },
+            ),
+            ListTile(
+              leading: CircleAvatar(
+                child: Icon(
+                  Icons.info,
+                  color: Colors.white,
+                ),
+                backgroundColor: Colors.transparent,
+              ),
+              title: Text('About'),
+              subtitle: Text('Application • Platform'),
+              trailing: Icon(Icons.keyboard_arrow_right),
+              onTap: () {},
+            ),
+          ],
+        ).toList(),
       ),
     );
   }
