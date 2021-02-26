@@ -30,6 +30,9 @@ void main() async {
       systemNavigationBarColor: AppThemeConfig().appTheme.primaryColor,
     ),
   );
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
   runApp(ProviderScope(child: Application()));
 }
 
