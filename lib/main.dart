@@ -14,7 +14,7 @@ class AppThemeConfig {
     visualDensity: VisualDensity.adaptivePlatformDensity,
     brightness: Brightness.dark,
     primaryColor: Color(0xFF181A20),
-    accentColor: Color(0xFFCBA6FC),
+    accentColor: Color(0xFF7678ED),
     canvasColor: Color(0xFF181A20),
     cardColor: Color(0xFF262A34),
     dialogBackgroundColor: Color(0xFF262A34),
@@ -127,6 +127,11 @@ class BNavigationConfig {
 class ConnectionTab extends HookWidget {
   @override
   Widget build(BuildContext context) {
+    final connectionStatusIndex = useProvider(ConnectionConfig().connectionStatusIndex);
+
+    String connectionStatus = ConnectionConfig().connectionStatuses[connectionStatusIndex.state];
+    Color connectionStatusColor = ConnectionConfig().connectionStatusColors[connectionStatusIndex.state];
+
     return Scaffold(
       appBar: AppBar(
         title: Text('OpenXC'),
@@ -168,51 +173,70 @@ class ConnectionTab extends HookWidget {
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                   subtitle: Text(
-                    'Connected',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFF9DE089)),
+                    connectionStatus,
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: connectionStatusColor),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 10.0),
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              child: Container(
-                padding: EdgeInsets.all(5.0),
-                child: ListTile(
-                  title: Text(
-                    'Connection Status',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  subtitle: Text(
-                    'Disconnected',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFFDF927B)),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 10.0),
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              child: Container(
-                padding: EdgeInsets.all(5.0),
-                child: ListTile(
-                  title: Text(
-                    'VI Device Name',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  subtitle: Text(
-                    'Disconnected',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 10.0),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.ac_unit_outlined),
+        onPressed: () {
+          if (connectionStatusIndex.state == 0) {
+            connectionStatusIndex.state = 1;
+          } else if (connectionStatusIndex.state == 1) {
+            connectionStatusIndex.state = 0;
+          }
+        },
+      ),
+    );
+  }
+}
+
+class ConnectionConfig {
+  static ConnectionConfig _instance;
+  factory ConnectionConfig() => _instance ??= ConnectionConfig._internal();
+  ConnectionConfig._internal();
+
+  final _dataSourceProvider = StateProvider<String>((ref) => 'Bluetooth Low Energy');
+
+  StateProvider<String> get dataSourceProvider => _dataSourceProvider;
+
+  final _connectionStatusIndex = StateProvider<int>((ref) => 0);
+
+  StateProvider<int> get connectionStatusIndex => _connectionStatusIndex;
+
+  final _connectionStatuses = [
+    'Disconnected',
+    'Connected',
+  ];
+
+  List<String> get connectionStatuses => _connectionStatuses;
+
+  final _connectionStatusColors = [
+    Color(0xFFDF927B),
+    Color(0xFF9DE089),
+  ];
+
+  List<Color> get connectionStatusColors => _connectionStatusColors;
+}
+
+class DashboardTab extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('OpenXC'),
+        centerTitle: true,
+      ),
+      body: Container(
+        padding: EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15.0),
@@ -233,21 +257,6 @@ class ConnectionTab extends HookWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class DashboardTab extends HookWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('OpenXC'),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Text('DASHBOARD'),
       ),
     );
   }
