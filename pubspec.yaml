@@ -3,15 +3,18 @@ description: OpenXC
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  flutter_hooks: ^0.15.0
+  hooks_riverpod: ^0.12.4
   flutter_blue: ^0.7.3
-  badges: ^1.1.4
-  path_provider: ^1.6.24
-  shared_preferences: ^0.5.12+4
 
 flutter:
   uses-material-design: true
+  fonts:
+      - family: Comfortaa
+        fonts:
+          - asset: fonts/Comfortaa.ttf
