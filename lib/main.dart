@@ -96,10 +96,9 @@ class BNavigationConfig {
   StateProvider<int> get bNavigationIndexProvider => _bNavigationIndexProvider;
 
   final _bNavigationPages = [
-    EmptyTab(),
-    EmptyTab(),
-    EmptyTab(),
-    EmptyTab(),
+    ConnectionTab(),
+    DashboardTab(),
+    SettingsTab(),
   ];
 
   List<Widget> get bNavigationPages => _bNavigationPages;
@@ -107,26 +106,22 @@ class BNavigationConfig {
   final _bNavigationItems = [
     BottomNavigationBarItem(
       icon: Icon(Icons.account_tree_outlined),
-      label: 'Empty',
+      label: 'Connection',
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.account_tree_outlined),
-      label: 'Empty',
+      icon: Icon(Icons.analytics_outlined),
+      label: 'Dashboard',
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.account_tree_outlined),
-      label: 'Empty',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.account_tree_outlined),
-      label: 'Empty',
+      icon: Icon(Icons.settings_outlined),
+      label: 'Settings',
     ),
   ];
 
   List<BottomNavigationBarItem> get bNavigationItems => _bNavigationItems;
 }
 
-class EmptyTab extends HookWidget {
+class ConnectionTab extends HookWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,7 +130,37 @@ class EmptyTab extends HookWidget {
         centerTitle: true,
       ),
       body: Center(
-        child: Text('EMPTY'),
+        child: Text('CONNECTION'),
+      ),
+    );
+  }
+}
+
+class DashboardTab extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('OpenXC'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Text('DASHBOARD'),
+      ),
+    );
+  }
+}
+
+class SettingsTab extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('OpenXC'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Text('SETTINGS'),
       ),
     );
   }
