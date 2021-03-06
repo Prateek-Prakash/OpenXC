@@ -287,8 +287,7 @@ class SettingsTab extends HookWidget {
               title: Text('Connection'),
               subtitle: Text('BLE • USB • Trace File'),
               trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {
-              },
+              onTap: () {},
             ),
             ListTile(
               leading: CircleAvatar(
@@ -301,8 +300,7 @@ class SettingsTab extends HookWidget {
               title: Text('Recording'),
               subtitle: Text('Trace Files • Dweet.IO'),
               trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {
-              },
+              onTap: () {},
             ),
             ListTile(
               leading: CircleAvatar(
