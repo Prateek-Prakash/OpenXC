@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -19,7 +20,6 @@ class AppThemeConfig {
     cardColor: Color(0xFF262A34),
     dialogBackgroundColor: Color(0xFF262A34),
   );
-
   ThemeData get appTheme => _appTheme;
 }
 
@@ -95,7 +95,6 @@ class BNavigationConfig {
   BNavigationConfig._internal();
 
   final _bNavigationIndexProvider = StateProvider<int>((ref) => 0);
-
   StateProvider<int> get bNavigationIndexProvider => _bNavigationIndexProvider;
 
   final _bNavigationPages = [
@@ -103,7 +102,6 @@ class BNavigationConfig {
     DashboardTab(),
     SettingsTab(),
   ];
-
   List<Widget> get bNavigationPages => _bNavigationPages;
 
   final _bNavigationItems = [
@@ -120,7 +118,6 @@ class BNavigationConfig {
       label: 'Settings',
     ),
   ];
-
   List<BottomNavigationBarItem> get bNavigationItems => _bNavigationItems;
 }
 
@@ -128,11 +125,9 @@ class ConnectionTab extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final dataSourceProvider = useProvider(ConnectionConfig().dataSourceProvider);
-
-    final connectionStatusIndex = useProvider(ConnectionConfig().connectionStatusIndexProvider);
-
-    String connectionStatus = ConnectionConfig().connectionStatuses[connectionStatusIndex.state];
-    Color connectionStatusColor = ConnectionConfig().connectionStatusColors[connectionStatusIndex.state];
+    final connectionStatusBoolProvider = useProvider(ConnectionConfig().connectionStatusBoolProvider);
+    final connectionStatusStringProvider = useProvider(ConnectionConfig().connectionStatusStringProvider);
+    final connectionStatusColorProvider = useProvider(ConnectionConfig().connectionStatusColorProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -153,11 +148,16 @@ class ConnectionTab extends HookWidget {
                 child: ListTile(
                   title: Text(
                     'Data Source',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   subtitle: Text(
                     dataSourceProvider.state,
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
               ),
@@ -172,11 +172,17 @@ class ConnectionTab extends HookWidget {
                 child: ListTile(
                   title: Text(
                     'Connection Status',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   subtitle: Text(
-                    connectionStatus,
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: connectionStatusColor),
+                    connectionStatusStringProvider.state,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12.5,
+                      color: connectionStatusColorProvider.state,
+                    ),
                   ),
                 ),
               ),
@@ -186,11 +192,21 @@ class ConnectionTab extends HookWidget {
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.ac_unit),
-        onPressed: () {
-          if (connectionStatusIndex.state == 0) {
-            connectionStatusIndex.state = 1;
-          } else if (connectionStatusIndex.state == 1) {
-            connectionStatusIndex.state = 0;
+        onPressed: () async {
+          if (connectionStatusBoolProvider.state == false) {
+            if (await ConnectionConfig().connect())
+            {
+              connectionStatusBoolProvider.state = true;
+              connectionStatusStringProvider.state = 'Connected';
+              connectionStatusColorProvider.state = Color(0xFF9DE089);
+            }
+          } else if (connectionStatusBoolProvider.state == true) {
+            if (await ConnectionConfig().disconnect())
+            {
+              connectionStatusBoolProvider.state = false;
+              connectionStatusStringProvider.state = 'Disconnected';
+              connectionStatusColorProvider.state = Color(0xFFDF927B);
+            }
           }
         },
       ),
@@ -204,26 +220,24 @@ class ConnectionConfig {
   ConnectionConfig._internal();
 
   final _dataSourceProvider = StateProvider<String>((ref) => 'Bluetooth Low Energy (BLE)');
-
   StateProvider<String> get dataSourceProvider => _dataSourceProvider;
 
-  final _connectionStatusIndexProvider = StateProvider<int>((ref) => 0);
+  final _connectionStatusBoolProvider = StateProvider<bool>((ref) => false);
+  StateProvider<bool> get connectionStatusBoolProvider => _connectionStatusBoolProvider;
 
-  StateProvider<int> get connectionStatusIndexProvider => _connectionStatusIndexProvider;
+  final _connectionStatusStringProvider = StateProvider<String>((ref) => 'Disconnected');
+  StateProvider<String> get connectionStatusStringProvider => _connectionStatusStringProvider;
 
-  final _connectionStatuses = [
-    'Disconnected',
-    'Connected',
-  ];
+  final _connectionStatusColorProvider = StateProvider<Color>((ref) => Color(0xFFDF927B));
+  StateProvider<Color> get connectionStatusColorProvider => _connectionStatusColorProvider;
 
-  List<String> get connectionStatuses => _connectionStatuses;
+  Future<bool> disconnect() async {
+    return true;
+  }
 
-  final _connectionStatusColors = [
-    Color(0xFFDF927B),
-    Color(0xFF9DE089),
-  ];
-
-  List<Color> get connectionStatusColors => _connectionStatusColors;
+  Future<bool> connect() async {
+    return true;
+  }
 }
 
 class DashboardTab extends HookWidget {
@@ -248,11 +262,16 @@ class DashboardTab extends HookWidget {
                 child: ListTile(
                   title: Text(
                     'Messages Received',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   subtitle: Text(
                     '2020',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
               ),
