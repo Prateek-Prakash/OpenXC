@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
@@ -235,11 +237,60 @@ class ConnectionConfig {
   StateProvider<Color> get connectionStatusColorProvider => _connectionStatusColorProvider;
 
   Future<bool> connect() async {
-    return true;
+    BluetoothService openXCService;
+
+    List<ScanResult> scanResults = await FlutterBlue.instance.scan(timeout: Duration(seconds: 5)).toList();
+    for (ScanResult scanResult in scanResults) {
+      printScanResult(scanResult);
+      String deviceName = scanResult.advertisementData.localName.trim().toUpperCase();
+      if (deviceName.contains(DEVICE_NAME_PREFIX)) {
+        BluetoothDevice bluetoothDevice = scanResult.device;
+        await bluetoothDevice.connect();
+
+        List<BluetoothService> bluetoothServices = await bluetoothDevice.discoverServices();
+        for (BluetoothService bluetoothService in bluetoothServices) {
+          if (bluetoothService.uuid.toString().toUpperCase() == OPENXC_SERVICE_UUID) {
+            openXCService = bluetoothService;
+            print('Service UUID: ${openXCService.uuid.toString().toUpperCase()}');
+            break;
+          }
+        }
+
+        // Assign Write Characteristic
+        BluetoothCharacteristic writeCharacteristic = openXCService.characteristics
+            .where((X) => X.uuid.toString().toUpperCase() == WRITE_CHARACTERISTIC_UUID)
+            .first;
+        print('Write Characteristic UUID: ${writeCharacteristic.uuid.toString().toUpperCase()}');
+
+        // Assign Notify Characteristic
+        BluetoothCharacteristic notifyCharacteristic = openXCService.characteristics
+            .where((X) => X.uuid.toString().toUpperCase() == NOTIFY_CHARACTERISTIC_UUID)
+            .first;
+        print('Notify Characteristic UUID: ${notifyCharacteristic.uuid.toString().toUpperCase()}');
+
+        // Listen: Read Data
+        await notifyCharacteristic.setNotifyValue(true);
+
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<bool> disconnect() async {
+    List<BluetoothDevice> bluetoothDevices = await FlutterBlue.instance.connectedDevices;
+    bluetoothDevices.forEach((bluetoothDevice) async {
+      await bluetoothDevice.disconnect();
+    });
     return true;
+  }
+
+  void printScanResult(ScanResult scanResult) {
+    String deviceId = scanResult.device.id.toString().toUpperCase();
+    String deviceName = scanResult.advertisementData.localName.replaceAll(RegExp(r'\0'), '').trim().toUpperCase();
+    if (deviceName.isNotEmpty) {
+      print('$deviceId :: $deviceName');
+    }
   }
 }
 
