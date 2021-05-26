@@ -194,15 +194,13 @@ class ConnectionTab extends HookWidget {
         child: Icon(Icons.ac_unit),
         onPressed: () async {
           if (connectionStatusBoolProvider.state == false) {
-            if (await ConnectionConfig().connect())
-            {
+            if (await ConnectionConfig().connect()) {
               connectionStatusBoolProvider.state = true;
               connectionStatusStringProvider.state = 'Connected';
               connectionStatusColorProvider.state = Color(0xFF9DE089);
             }
           } else if (connectionStatusBoolProvider.state == true) {
-            if (await ConnectionConfig().disconnect())
-            {
+            if (await ConnectionConfig().disconnect()) {
               connectionStatusBoolProvider.state = false;
               connectionStatusStringProvider.state = 'Disconnected';
               connectionStatusColorProvider.state = Color(0xFFDF927B);
@@ -213,6 +211,11 @@ class ConnectionTab extends HookWidget {
     );
   }
 }
+
+const DEVICE_NAME_PREFIX = "OPENXC-VI-";
+const OPENXC_SERVICE_UUID = "6800D38B-423D-4BDB-BA05-C9276D8453E1";
+const WRITE_CHARACTERISTIC_UUID = "6800D38B-5262-11E5-885D-FEFF819CDCE2";
+const NOTIFY_CHARACTERISTIC_UUID = "6800D38B-5262-11E5-885D-FEFF819CDCE3";
 
 class ConnectionConfig {
   static ConnectionConfig _instance;
@@ -231,11 +234,11 @@ class ConnectionConfig {
   final _connectionStatusColorProvider = StateProvider<Color>((ref) => Color(0xFFDF927B));
   StateProvider<Color> get connectionStatusColorProvider => _connectionStatusColorProvider;
 
-  Future<bool> disconnect() async {
+  Future<bool> connect() async {
     return true;
   }
 
-  Future<bool> connect() async {
+  Future<bool> disconnect() async {
     return true;
   }
 }
