@@ -130,6 +130,7 @@ class ConnectionTab extends HookWidget {
     final connectionStatusBoolProvider = useProvider(ConnectionConfig().connectionStatusBoolProvider);
     final connectionStatusStringProvider = useProvider(ConnectionConfig().connectionStatusStringProvider);
     final connectionStatusColorProvider = useProvider(ConnectionConfig().connectionStatusColorProvider);
+    final actionButtonStringProvider = useProvider(ConnectionConfig().actionButtonStringProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -192,23 +193,34 @@ class ConnectionTab extends HookWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.ac_unit),
-        onPressed: () async {
-          if (connectionStatusBoolProvider.state == false) {
-            if (await ConnectionConfig().connect()) {
-              connectionStatusBoolProvider.state = true;
-              connectionStatusStringProvider.state = 'Connected';
-              connectionStatusColorProvider.state = Color(0xFF9DE089);
-            }
-          } else if (connectionStatusBoolProvider.state == true) {
-            if (await ConnectionConfig().disconnect()) {
-              connectionStatusBoolProvider.state = false;
-              connectionStatusStringProvider.state = 'Disconnected';
-              connectionStatusColorProvider.state = Color(0xFFDF927B);
-            }
-          }
-        },
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Container(
+        padding: EdgeInsets.fromLTRB(10.0, 0.0, 10.0, 0.0),
+        child: SizedBox(
+          width: double.infinity,
+          height: 40.0,
+          child: FloatingActionButton.extended(
+            elevation: 5.0,
+            label: Text(actionButtonStringProvider.state),
+            onPressed: () async {
+              if (connectionStatusBoolProvider.state == false) {
+                if (await ConnectionConfig().connect()) {
+                  connectionStatusBoolProvider.state = true;
+                  connectionStatusStringProvider.state = 'Connected';
+                  connectionStatusColorProvider.state = Color(0xFF9DE089);
+                  actionButtonStringProvider.state = 'DISCONNECT';
+                }
+              } else if (connectionStatusBoolProvider.state == true) {
+                if (await ConnectionConfig().disconnect()) {
+                  connectionStatusBoolProvider.state = false;
+                  connectionStatusStringProvider.state = 'Disconnected';
+                  connectionStatusColorProvider.state = Color(0xFFDF927B);
+                  actionButtonStringProvider.state = 'CONNECT';
+                }
+              }
+            },
+          ),
+        ),
       ),
     );
   }
@@ -236,12 +248,18 @@ class ConnectionConfig {
   final _connectionStatusColorProvider = StateProvider<Color>((ref) => Color(0xFFDF927B));
   StateProvider<Color> get connectionStatusColorProvider => _connectionStatusColorProvider;
 
+  final _actionButtonStringProvider = StateProvider<String>((ref) => 'CONNECT');
+  StateProvider<String> get actionButtonStringProvider => _actionButtonStringProvider;
+
   Future<bool> connect() async {
+    // Disconnect All Devices
+    await this.disconnect();
+
     BluetoothService openXCService;
 
     List<ScanResult> scanResults = await FlutterBlue.instance.scan(timeout: Duration(seconds: 5)).toList();
     for (ScanResult scanResult in scanResults) {
-      printScanResult(scanResult);
+      this.printScanResult(scanResult);
       String deviceName = scanResult.advertisementData.localName.trim().toUpperCase();
       if (deviceName.contains(DEVICE_NAME_PREFIX)) {
         BluetoothDevice bluetoothDevice = scanResult.device;
