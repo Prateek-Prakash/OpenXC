@@ -11,6 +11,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 
 import 'package:flutter_blue/flutter_blue.dart';
 
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+
 final getIt = GetIt.instance;
 void setupGetIt() {
   getIt.registerSingleton(AppShellVM());
@@ -123,17 +125,18 @@ class AppShellVM extends ChangeNotifier {
 }
 
 class InfoCard extends StatelessWidget {
-  final bool isVisible;
+  final bool visible;
   final String title;
   final String subtitle;
   final Color subtitleColor;
+  final Widget trailing;
 
-  InfoCard({this.isVisible, this.title, this.subtitle, this.subtitleColor});
+  InfoCard({this.visible, this.title, this.subtitle, this.subtitleColor, this.trailing});
 
   @override
   Widget build(BuildContext context) {
     return Visibility(
-      visible: this.isVisible != null ? this.isVisible : true,
+      visible: this.visible != null ? this.visible : true,
       child: Card(
         elevation: 0.0,
         shape: RoundedRectangleBorder(
@@ -156,6 +159,7 @@ class InfoCard extends StatelessWidget {
                 color: subtitleColor,
               ),
             ),
+            trailing: this.trailing,
           ),
         ),
       ),
@@ -185,10 +189,21 @@ class ConnectionTab extends HookWidget {
               title: 'Connection Status',
               subtitle: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.connectionStatusLabel),
               subtitleColor: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.connectionStatusColor),
+              trailing: Visibility(
+                visible: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.isScanning),
+                child: SizedBox(
+                  width: 20.0,
+                  height: 20.0,
+                  child: SpinKitCircle(
+                    color: Colors.white,
+                    size: 20.0,
+                  ),
+                ),
+              ),
             ),
             SizedBox(height: 10.0),
             InfoCard(
-              isVisible: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.isConnected),
+              visible: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.isConnected),
               title: 'VI Name',
               subtitle: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.viName),
             ),
@@ -228,6 +243,9 @@ class ConnectionTabVM extends ChangeNotifier {
   bool _isConnected = false;
   bool get isConnected => _isConnected;
 
+  bool _isScanning = false;
+  bool get isScanning => _isScanning;
+
   String _connectionStatusLabel = 'Disconnected';
   String get connectionStatusLabel => _connectionStatusLabel;
 
@@ -250,6 +268,9 @@ class ConnectionTabVM extends ChangeNotifier {
   Future<void> connect() async {
     // Disconnect All Devices
     await this.disconnect();
+
+    this._isScanning = true;
+    notifyListeners();
 
     List<ScanResult> scanResults = await FlutterBlue.instance.scan(timeout: Duration(seconds: 5)).toList();
     for (ScanResult scanResult in scanResults) {
@@ -301,6 +322,7 @@ class ConnectionTabVM extends ChangeNotifier {
 
         // Update Connection Related Variables
         this._isConnected = true;
+        this._isScanning = false;
         this._connectionStatusLabel = 'Connected';
         this._connectionStatusColor = Color(0xFF9DE089);
         this._fabLabel = 'DISCONNECT';
@@ -308,6 +330,11 @@ class ConnectionTabVM extends ChangeNotifier {
 
         notifyListeners();
       }
+    }
+
+    if (this._isScanning) {
+        this._isScanning = false;
+        notifyListeners();
     }
   }
 
@@ -359,6 +386,7 @@ class VehicleMessageCard extends HookWidget {
     String messageCount = useWatchXOnly((DashboardTabVM dashboardTabVM) => dashboardTabVM.messagesMap[this.messageKey],
         (VehicleMessage vehicleMessage) => vehicleMessage.count.toString());
     return Card(
+      elevation: 0.0,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -516,8 +544,9 @@ class SettingsListTile extends StatelessWidget {
   final IconData iconData;
   final String title;
   final String subtitle;
+  final Function onTap;
 
-  SettingsListTile({this.iconData, this.title, this.subtitle});
+  SettingsListTile({this.iconData, this.title, this.subtitle, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -532,7 +561,7 @@ class SettingsListTile extends StatelessWidget {
       title: Text(this.title),
       subtitle: Text(this.subtitle),
       trailing: Icon(Icons.keyboard_arrow_right),
-      onTap: () {},
+      onTap: this.onTap,
     );
   }
 }
@@ -553,16 +582,19 @@ class SettingsTab extends HookWidget {
               iconData: Icons.account_tree,
               title: 'Connection',
               subtitle: 'BLE • Trace File',
+              onTap: () {},
             ),
             SettingsListTile(
               iconData: Icons.save,
               title: 'Recording',
               subtitle: 'Trace Files • Dweet.IO',
+              onTap: () {},
             ),
             SettingsListTile(
               iconData: Icons.info,
               title: 'About',
               subtitle: 'Application • Platform',
+              onTap: () {},
             ),
           ],
         ).toList(),
