@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -12,6 +15,7 @@ final getIt = GetIt.instance;
 void setupGetIt() {
   getIt.registerSingleton(AppShellVM());
   getIt.registerSingleton(ConnectionTabVM());
+  getIt.registerSingleton(DashboardTabVM());
 }
 
 void main() async {
@@ -236,17 +240,20 @@ class ConnectionTabVM extends ChangeNotifier {
   String _viName = 'Unknown';
   String get viName => _viName;
 
+  BluetoothService _openXCService;
+  BluetoothCharacteristic _writeCharacteristic;
+  BluetoothCharacteristic _notifyCharacteristic;
+  StreamSubscription _readSub;
+
   // Connect Method
   Future<void> connect() async {
     // Disconnect All Devices
     await this.disconnect();
 
-    BluetoothService openXCService;
-
     List<ScanResult> scanResults = await FlutterBlue.instance.scan(timeout: Duration(seconds: 5)).toList();
     for (ScanResult scanResult in scanResults) {
       // Print Scane Result
-      this.printScanResult(scanResult);
+      this._printScanResult(scanResult);
 
       // Find OpenXC Device
       String deviceName = scanResult.advertisementData.localName.trim().toUpperCase();
@@ -258,26 +265,33 @@ class ConnectionTabVM extends ChangeNotifier {
         List<BluetoothService> bluetoothServices = await bluetoothDevice.discoverServices();
         for (BluetoothService bluetoothService in bluetoothServices) {
           if (bluetoothService.uuid.toString().toUpperCase() == OPENXC_SERVICE_UUID) {
-            openXCService = bluetoothService;
-            print('Service UUID: ${openXCService.uuid.toString().toUpperCase()}');
+            this._openXCService = bluetoothService;
+            print('Service UUID: ${this._openXCService.uuid.toString().toUpperCase()}');
             break;
           }
         }
 
         // Assign Write Characteristic
-        BluetoothCharacteristic writeCharacteristic = openXCService.characteristics
+        this._writeCharacteristic = this
+            ._openXCService
+            .characteristics
             .where((X) => X.uuid.toString().toUpperCase() == WRITE_CHARACTERISTIC_UUID)
             .first;
-        print('Write Characteristic UUID: ${writeCharacteristic.uuid.toString().toUpperCase()}');
+        print('Write Characteristic UUID: ${this._writeCharacteristic.uuid.toString().toUpperCase()}');
 
         // Assign Notify Characteristic
-        BluetoothCharacteristic notifyCharacteristic = openXCService.characteristics
+        this._notifyCharacteristic = this
+            ._openXCService
+            .characteristics
             .where((X) => X.uuid.toString().toUpperCase() == NOTIFY_CHARACTERISTIC_UUID)
             .first;
-        print('Notify Characteristic UUID: ${notifyCharacteristic.uuid.toString().toUpperCase()}');
+        print('Notify Characteristic UUID: ${this._notifyCharacteristic.uuid.toString().toUpperCase()}');
 
         // Keep Connected
-        await notifyCharacteristic.setNotifyValue(true);
+        await this._notifyCharacteristic.setNotifyValue(true);
+        this._readSub = this._notifyCharacteristic.value.listen((data) {
+          useGet<DashboardTabVM>().addToDataBuffer(data);
+        });
 
         // Update Connection Related Variables
         this._isConnected = true;
@@ -285,6 +299,7 @@ class ConnectionTabVM extends ChangeNotifier {
         this._connectionStatusColor = Color(0xFF9DE089);
         this._fabLabel = 'DISCONNECT';
         this._viName = deviceName;
+
         notifyListeners();
       }
     }
@@ -297,21 +312,74 @@ class ConnectionTabVM extends ChangeNotifier {
       await bluetoothDevice.disconnect();
     });
 
+    this._openXCService = null;
+    this._writeCharacteristic = null;
+    this._notifyCharacteristic = null;
+    this._readSub?.cancel();
+
+    // Clear Data
+    useGet<DashboardTabVM>().clearDataBuffer();
+
     // Update Connection Related Variables
     this._isConnected = false;
     this._connectionStatusLabel = 'Disconnected';
     this._connectionStatusColor = Color(0xFFDF927B);
     this._fabLabel = 'CONNECT';
     this._viName = 'Unknown';
+
     notifyListeners();
   }
 
-  void printScanResult(ScanResult scanResult) {
+  void _printScanResult(ScanResult scanResult) {
     String deviceId = scanResult.device.id.toString().toUpperCase();
     String deviceName = scanResult.advertisementData.localName.replaceAll(RegExp(r'\0'), '').trim().toUpperCase();
     if (deviceName.isNotEmpty) {
       print('$deviceId :: $deviceName');
     }
+  }
+}
+
+class VehicleMessageCard extends HookWidget {
+  final String messageKey;
+
+  VehicleMessageCard({this.messageKey});
+
+  @override
+  Widget build(BuildContext context) {
+    String messageName = useGet<DashboardTabVM>().messagesMap[this.messageKey].name;
+    String messageValue = useWatchXOnly((DashboardTabVM dashboardTabVM) => dashboardTabVM.messagesMap[this.messageKey],
+        (VehicleMessage vehicleMessage) => vehicleMessage.value);
+    String messageCount = useWatchXOnly((DashboardTabVM dashboardTabVM) => dashboardTabVM.messagesMap[this.messageKey],
+        (VehicleMessage vehicleMessage) => vehicleMessage.count.toString());
+    return Card(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            title: Text(
+              messageName,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 12.5,
+              ),
+            ),
+            subtitle: Text(
+              messageValue,
+              style: TextStyle(
+                fontSize: 10.0,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            trailing: Text(
+              messageCount,
+              style: TextStyle(
+                fontWeight: FontWeight.w100,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -322,20 +390,119 @@ class DashboardTab extends HookWidget {
       appBar: AppBar(
         title: Text('OpenXC'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.clear_all),
+            onPressed: () {
+              useGet<DashboardTabVM>().clearAllData();
+            },
+          ),
+        ],
       ),
       body: Container(
-        padding: EdgeInsets.all(15.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            InfoCard(
-              title: 'Messages Received',
-              subtitle: '2020',
-            ),
-          ],
+        child: ListView.builder(
+          padding: EdgeInsets.all(5.0),
+          itemCount: useWatchOnly((DashboardTabVM dashboardTabVM) => dashboardTabVM.messageKeys.length),
+          itemBuilder: (context, index) {
+            return VehicleMessageCard(
+              messageKey: useGet<DashboardTabVM>().messageKeys[index],
+            );
+          },
         ),
       ),
     );
+  }
+}
+
+class VehicleMessage extends ChangeNotifier {
+  final Map jsonMap;
+  final String decodedMessage;
+  final String name;
+
+  String _value = 'UNKNOWN';
+  String get value => _value;
+  set value(String val) {
+    this._value = val;
+    notifyListeners();
+  }
+
+  int _count = 1;
+  int get count => _count;
+  set count(int val) {
+    this._count = val;
+    notifyListeners();
+  }
+
+  VehicleMessage(this.jsonMap, this.decodedMessage, this.name, this._value);
+
+  VehicleMessage.fromJson(Map jsonMap)
+      : this.jsonMap = jsonMap,
+        this.decodedMessage = json.encode(jsonMap),
+        this.name = jsonMap['name'].toString().toUpperCase().replaceAll('_', ' '),
+        this._value = jsonMap['event'] != null
+            ? (jsonMap['value'] + ' • ' + jsonMap['event']).toString().toUpperCase().replaceAll('_', ' ')
+            : jsonMap['value'].toString().toUpperCase().replaceAll('_', ' ');
+}
+
+class DashboardTabVM extends ChangeNotifier {
+  List<int> _dataBuffer = [];
+  List<int> get dataBuffer => _dataBuffer;
+
+  List<String> _decodedData = [];
+  List<String> get decodedData => _decodedData;
+
+  List<VehicleMessage> _vehicleMessages = [];
+  List<VehicleMessage> get vehicleMessages => _vehicleMessages;
+
+  List<String> _messageKeys = [];
+  List<String> get messageKeys => _messageKeys;
+
+  Map<String, VehicleMessage> _messagesMap = Map<String, VehicleMessage>();
+  Map<String, VehicleMessage> get messagesMap => _messagesMap;
+
+  void addToDataBuffer(List<int> data) {
+    this._dataBuffer.addAll(data);
+    this._decodeDataBuffer();
+    notifyListeners();
+  }
+
+  void clearAllData() {
+    this._dataBuffer.clear();
+    this._decodedData.clear();
+    this._vehicleMessages.clear();
+    this._messageKeys.clear();
+    this._messagesMap.clear();
+    
+    notifyListeners();
+  }
+
+  void clearDataBuffer() {
+    this._dataBuffer.clear();
+    notifyListeners();
+  }
+
+  void _decodeDataBuffer() {
+    int terminatorIndex = this._dataBuffer.indexOf(0);
+    while (terminatorIndex != -1) {
+      List<int> encodedMessage = this._dataBuffer.sublist(0, terminatorIndex);
+      this._dataBuffer.removeRange(0, terminatorIndex + 1);
+      try {
+        String decodedMessage = utf8.decode(encodedMessage);
+        Map jsonMap = json.decode(decodedMessage);
+        this._decodedData.add(decodedMessage);
+        VehicleMessage vehicleMessage = VehicleMessage.fromJson(jsonMap);
+        this._vehicleMessages.add(vehicleMessage);
+        if (this._messagesMap.containsKey(vehicleMessage.name)) {
+          this._messagesMap[vehicleMessage.name].value = vehicleMessage.value;
+          this._messagesMap[vehicleMessage.name].count++;
+        } else {
+          this._messageKeys = this._messagesMap.keys.toList()..sort();
+          this._messagesMap[vehicleMessage.name] = vehicleMessage;
+        }
+        print('JSON Data: $decodedMessage');
+      } catch (exception) {}
+      terminatorIndex = this._dataBuffer.indexOf(0);
+    }
   }
 }
 
@@ -379,7 +546,7 @@ class SettingsTab extends HookWidget {
             SettingsListTile(
               iconData: Icons.account_tree,
               title: 'Connection',
-              subtitle: 'BLE • USB • Trace File',
+              subtitle: 'BLE • Trace File',
             ),
             SettingsListTile(
               iconData: Icons.save,
