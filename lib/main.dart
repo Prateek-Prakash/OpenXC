@@ -266,75 +266,77 @@ class ConnectionTabVM extends ChangeNotifier {
 
   // Connect Method
   Future<void> connect() async {
-    // Disconnect All Devices
-    await this.disconnect();
+    if (!this._isScanning) {
+      // Disconnect All Devices
+      await this.disconnect();
 
-    this._isScanning = true;
-    notifyListeners();
+      this._isScanning = true;
+      notifyListeners();
 
-    List<ScanResult> scanResults = await FlutterBlue.instance.scan(timeout: Duration(seconds: 5)).toList();
-    for (ScanResult scanResult in scanResults) {
-      // Print Scane Result
-      this._printScanResult(scanResult);
+      List<ScanResult> scanResults = await FlutterBlue.instance.scan(timeout: Duration(seconds: 5)).toList();
+      for (ScanResult scanResult in scanResults) {
+        // Print Scane Result
+        this._printScanResult(scanResult);
 
-      // Find OpenXC Device
-      String deviceName = scanResult.advertisementData.localName.trim().toUpperCase();
-      if (deviceName.contains(DEVICE_NAME_PREFIX)) {
-        BluetoothDevice bluetoothDevice = scanResult.device;
-        await bluetoothDevice.connect();
+        // Find OpenXC Device
+        String deviceName = scanResult.advertisementData.localName.trim().toUpperCase();
+        if (deviceName.contains(DEVICE_NAME_PREFIX)) {
+          BluetoothDevice bluetoothDevice = scanResult.device;
+          await bluetoothDevice.connect();
 
-        // Listen: State Changes
-        this._stateSub = bluetoothDevice.state.listen((state) async {
-          print('Device State: ${state.toString()}');
-        });
+          // Listen: State Changes
+          this._stateSub = bluetoothDevice.state.listen((state) async {
+            print('Device State: ${state.toString().toUpperCase()}');
+          });
 
-        // Find OpenXC Service
-        List<BluetoothService> bluetoothServices = await bluetoothDevice.discoverServices();
-        for (BluetoothService bluetoothService in bluetoothServices) {
-          if (bluetoothService.uuid.toString().toUpperCase() == OPENXC_SERVICE_UUID) {
-            this._openXCService = bluetoothService;
-            print('Service UUID: ${this._openXCService.uuid.toString().toUpperCase()}');
-            break;
+          // Find OpenXC Service
+          List<BluetoothService> bluetoothServices = await bluetoothDevice.discoverServices();
+          for (BluetoothService bluetoothService in bluetoothServices) {
+            if (bluetoothService.uuid.toString().toUpperCase() == OPENXC_SERVICE_UUID) {
+              this._openXCService = bluetoothService;
+              print('Service UUID: ${this._openXCService.uuid.toString().toUpperCase()}');
+              break;
+            }
           }
+
+          // Assign Write Characteristic
+          this._writeCharacteristic = this
+              ._openXCService
+              .characteristics
+              .where((X) => X.uuid.toString().toUpperCase() == WRITE_CHARACTERISTIC_UUID)
+              .first;
+          print('Write Characteristic UUID: ${this._writeCharacteristic.uuid.toString().toUpperCase()}');
+
+          // Assign Notify Characteristic
+          this._notifyCharacteristic = this
+              ._openXCService
+              .characteristics
+              .where((X) => X.uuid.toString().toUpperCase() == NOTIFY_CHARACTERISTIC_UUID)
+              .first;
+          print('Notify Characteristic UUID: ${this._notifyCharacteristic.uuid.toString().toUpperCase()}');
+
+          // Keep Connected
+          await this._notifyCharacteristic.setNotifyValue(true);
+          this._readSub = this._notifyCharacteristic.value.listen((data) {
+            useGet<DashboardTabVM>().addToDataBuffer(data);
+          });
+
+          // Update Connection Related Variables
+          this._isConnected = true;
+          this._isScanning = false;
+          this._connectionStatusLabel = 'Connected';
+          this._connectionStatusColor = Color(0xFF9DE089);
+          this._fabLabel = 'DISCONNECT';
+          this._viName = deviceName;
+
+          notifyListeners();
         }
+      }
 
-        // Assign Write Characteristic
-        this._writeCharacteristic = this
-            ._openXCService
-            .characteristics
-            .where((X) => X.uuid.toString().toUpperCase() == WRITE_CHARACTERISTIC_UUID)
-            .first;
-        print('Write Characteristic UUID: ${this._writeCharacteristic.uuid.toString().toUpperCase()}');
-
-        // Assign Notify Characteristic
-        this._notifyCharacteristic = this
-            ._openXCService
-            .characteristics
-            .where((X) => X.uuid.toString().toUpperCase() == NOTIFY_CHARACTERISTIC_UUID)
-            .first;
-        print('Notify Characteristic UUID: ${this._notifyCharacteristic.uuid.toString().toUpperCase()}');
-
-        // Keep Connected
-        await this._notifyCharacteristic.setNotifyValue(true);
-        this._readSub = this._notifyCharacteristic.value.listen((data) {
-          useGet<DashboardTabVM>().addToDataBuffer(data);
-        });
-
-        // Update Connection Related Variables
-        this._isConnected = true;
+      if (this._isScanning) {
         this._isScanning = false;
-        this._connectionStatusLabel = 'Connected';
-        this._connectionStatusColor = Color(0xFF9DE089);
-        this._fabLabel = 'DISCONNECT';
-        this._viName = deviceName;
-
         notifyListeners();
       }
-    }
-
-    if (this._isScanning) {
-        this._isScanning = false;
-        notifyListeners();
     }
   }
 
