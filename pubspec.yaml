@@ -8,9 +8,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_hooks: ^0.17.0
-  hooks_riverpod: ^0.14.0+4
+  get_it: ^6.0.0
+  get_it_hooks: ^2.0.0
+  flutter_hooks: ^0.16.0
   flutter_blue: ^0.8.0
+  shared_preferences: ^2.0.6
+  
 
 flutter:
   uses-material-design: true

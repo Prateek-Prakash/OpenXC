@@ -1,41 +1,26 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+
+import 'package:get_it/get_it.dart';
+import 'package:get_it_hooks/get_it_hooks.dart';
 
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class AppThemeConfig {
-  static AppThemeConfig _instance;
-  factory AppThemeConfig() => _instance ??= AppThemeConfig._internal();
-  AppThemeConfig._internal();
+import 'package:flutter_blue/flutter_blue.dart';
 
-  final _appTheme = ThemeData(
-    fontFamily: 'Comfortaa',
-    visualDensity: VisualDensity.adaptivePlatformDensity,
-    brightness: Brightness.dark,
-    primaryColor: Color(0xFF181A20),
-    accentColor: Color(0xFF7678ED),
-    canvasColor: Color(0xFF181A20),
-    cardColor: Color(0xFF262A34),
-    dialogBackgroundColor: Color(0xFF262A34),
-  );
-  ThemeData get appTheme => _appTheme;
+final getIt = GetIt.instance;
+void setupGetIt() {
+  getIt.registerSingleton(AppShellVM());
+  getIt.registerSingleton(ConnectionTabVM());
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
-      systemNavigationBarColor: AppThemeConfig().appTheme.primaryColor,
-    ),
-  );
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
-  runApp(ProviderScope(child: Application()));
+  setupGetIt();
+  runApp(Application());
 }
 
 class Application extends StatelessWidget {
@@ -43,22 +28,29 @@ class Application extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        fontFamily: 'Comfortaa',
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        brightness: Brightness.dark,
+        primaryColor: Color(0xFF181A20),
+        accentColor: Color(0xFF7678ED),
+        canvasColor: Color(0xFF181A20),
+        cardColor: Color(0xFF262A34),
+        dialogBackgroundColor: Color(0xFF262A34),
+      ),
       title: 'OpenXC',
-      home: OpenXC(),
-      theme: AppThemeConfig().appTheme,
+      home: AppShellView(),
     );
   }
 }
 
-class OpenXC extends HookWidget {
+class AppShellView extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final bottomNavigationIndex = useProvider(BNavigationConfig().bNavigationIndexProvider);
-
     return Scaffold(
       body: IndexedStack(
-        index: bottomNavigationIndex.state,
-        children: BNavigationConfig().bNavigationPages,
+        index: useWatchOnly((AppShellVM appShellVM) => appShellVM.navIndex),
+        children: useGet<AppShellVM>().navTabs,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -79,11 +71,11 @@ class OpenXC extends HookWidget {
             type: BottomNavigationBarType.fixed,
             showSelectedLabels: false,
             showUnselectedLabels: false,
-            currentIndex: bottomNavigationIndex.state,
+            currentIndex: useWatchOnly((AppShellVM appShellVM) => appShellVM.navIndex),
             onTap: (index) {
-              bottomNavigationIndex.state = index;
+              useGet<AppShellVM>().navIndex = index;
             },
-            items: BNavigationConfig().bNavigationItems,
+            items: useGet<AppShellVM>().navItems,
           ),
         ),
       ),
@@ -91,22 +83,17 @@ class OpenXC extends HookWidget {
   }
 }
 
-class BNavigationConfig {
-  static BNavigationConfig _instance;
-  factory BNavigationConfig() => _instance ??= BNavigationConfig._internal();
-  BNavigationConfig._internal();
-
-  final _bNavigationIndexProvider = StateProvider<int>((ref) => 0);
-  StateProvider<int> get bNavigationIndexProvider => _bNavigationIndexProvider;
-
-  final _bNavigationPages = [
+class AppShellVM extends ChangeNotifier {
+  // Tab Views
+  List<Widget> _navTabs = [
     ConnectionTab(),
     DashboardTab(),
     SettingsTab(),
   ];
-  List<Widget> get bNavigationPages => _bNavigationPages;
+  List<Widget> get navTabs => _navTabs;
 
-  final _bNavigationItems = [
+  // Navigation Items
+  List<BottomNavigationBarItem> _navItems = [
     BottomNavigationBarItem(
       icon: Icon(Icons.account_tree_outlined),
       label: 'Connection',
@@ -120,18 +107,57 @@ class BNavigationConfig {
       label: 'Settings',
     ),
   ];
-  List<BottomNavigationBarItem> get bNavigationItems => _bNavigationItems;
+  List<BottomNavigationBarItem> get navItems => _navItems;
+
+  // Navigation Index
+  int _navIndex = 0;
+  int get navIndex => _navIndex;
+  set navIndex(int val) {
+    this._navIndex = val;
+    notifyListeners();
+  }
+}
+
+class InfoCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Color subtitleColor;
+
+  InfoCard({this.title, this.subtitle, this.subtitleColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      child: Container(
+        padding: EdgeInsets.all(5.0),
+        child: ListTile(
+          title: Text(
+            this.title,
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          subtitle: Text(
+            this.subtitle,
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 12.5,
+              color: subtitleColor,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class ConnectionTab extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final dataSourceProvider = useProvider(ConnectionConfig().dataSourceProvider);
-    final connectionStatusBoolProvider = useProvider(ConnectionConfig().connectionStatusBoolProvider);
-    final connectionStatusStringProvider = useProvider(ConnectionConfig().connectionStatusStringProvider);
-    final connectionStatusColorProvider = useProvider(ConnectionConfig().connectionStatusColorProvider);
-    final actionButtonStringProvider = useProvider(ConnectionConfig().actionButtonStringProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: Text('OpenXC'),
@@ -142,53 +168,15 @@ class ConnectionTab extends HookWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              child: Container(
-                padding: EdgeInsets.all(5.0),
-                child: ListTile(
-                  title: Text(
-                    'Data Source',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  subtitle: Text(
-                    dataSourceProvider.state,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ),
-              ),
+            InfoCard(
+              title: 'Data Source',
+              subtitle: 'Bluetooth Low Energy (BLE)',
             ),
             SizedBox(height: 10.0),
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              child: Container(
-                padding: EdgeInsets.all(5.0),
-                child: ListTile(
-                  title: Text(
-                    'Connection Status',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  subtitle: Text(
-                    connectionStatusStringProvider.state,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12.5,
-                      color: connectionStatusColorProvider.state,
-                    ),
-                  ),
-                ),
-              ),
+            InfoCard(
+              title: 'Connection Status',
+              subtitle: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.connectionStatusLabel),
+              subtitleColor: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.connectionStatusColor),
             ),
           ],
         ),
@@ -201,22 +189,12 @@ class ConnectionTab extends HookWidget {
           height: 40.0,
           child: FloatingActionButton.extended(
             elevation: 5.0,
-            label: Text(actionButtonStringProvider.state),
+            label: Text(useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.fabLabel)),
             onPressed: () async {
-              if (connectionStatusBoolProvider.state == false) {
-                if (await ConnectionConfig().connect()) {
-                  connectionStatusBoolProvider.state = true;
-                  connectionStatusStringProvider.state = 'Connected';
-                  connectionStatusColorProvider.state = Color(0xFF9DE089);
-                  actionButtonStringProvider.state = 'DISCONNECT';
-                }
-              } else if (connectionStatusBoolProvider.state == true) {
-                if (await ConnectionConfig().disconnect()) {
-                  connectionStatusBoolProvider.state = false;
-                  connectionStatusStringProvider.state = 'Disconnected';
-                  connectionStatusColorProvider.state = Color(0xFFDF927B);
-                  actionButtonStringProvider.state = 'CONNECT';
-                }
+              if (!useGet<ConnectionTabVM>().isConnected) {
+                await useGet<ConnectionTabVM>().connect();
+              } else {
+                await useGet<ConnectionTabVM>().disconnect();
               }
             },
           ),
@@ -226,32 +204,27 @@ class ConnectionTab extends HookWidget {
   }
 }
 
-const DEVICE_NAME_PREFIX = "OPENXC-VI-";
-const OPENXC_SERVICE_UUID = "6800D38B-423D-4BDB-BA05-C9276D8453E1";
-const WRITE_CHARACTERISTIC_UUID = "6800D38B-5262-11E5-885D-FEFF819CDCE2";
-const NOTIFY_CHARACTERISTIC_UUID = "6800D38B-5262-11E5-885D-FEFF819CDCE3";
+class ConnectionTabVM extends ChangeNotifier {
+  // OpenXC BLE Constants
+  static const DEVICE_NAME_PREFIX = 'OPENXC-VI-';
+  static const OPENXC_SERVICE_UUID = '6800D38B-423D-4BDB-BA05-C9276D8453E1';
+  static const WRITE_CHARACTERISTIC_UUID = '6800D38B-5262-11E5-885D-FEFF819CDCE2';
+  static const NOTIFY_CHARACTERISTIC_UUID = '6800D38B-5262-11E5-885D-FEFF819CDCE3';
 
-class ConnectionConfig {
-  static ConnectionConfig _instance;
-  factory ConnectionConfig() => _instance ??= ConnectionConfig._internal();
-  ConnectionConfig._internal();
+  bool _isConnected = false;
+  bool get isConnected => _isConnected;
 
-  final _dataSourceProvider = StateProvider<String>((ref) => 'Bluetooth Low Energy (BLE)');
-  StateProvider<String> get dataSourceProvider => _dataSourceProvider;
+  String _connectionStatusLabel = 'Disconnected';
+  String get connectionStatusLabel => _connectionStatusLabel;
 
-  final _connectionStatusBoolProvider = StateProvider<bool>((ref) => false);
-  StateProvider<bool> get connectionStatusBoolProvider => _connectionStatusBoolProvider;
+  Color _connectionStatusColor = Color(0xFFDF927B);
+  Color get connectionStatusColor => _connectionStatusColor;
 
-  final _connectionStatusStringProvider = StateProvider<String>((ref) => 'Disconnected');
-  StateProvider<String> get connectionStatusStringProvider => _connectionStatusStringProvider;
+  String _fabLabel = 'CONNECT';
+  String get fabLabel => _fabLabel;
 
-  final _connectionStatusColorProvider = StateProvider<Color>((ref) => Color(0xFFDF927B));
-  StateProvider<Color> get connectionStatusColorProvider => _connectionStatusColorProvider;
-
-  final _actionButtonStringProvider = StateProvider<String>((ref) => 'CONNECT');
-  StateProvider<String> get actionButtonStringProvider => _actionButtonStringProvider;
-
-  Future<bool> connect() async {
+  // Connect Method
+  Future<void> connect() async {
     // Disconnect All Devices
     await this.disconnect();
 
@@ -259,12 +232,16 @@ class ConnectionConfig {
 
     List<ScanResult> scanResults = await FlutterBlue.instance.scan(timeout: Duration(seconds: 5)).toList();
     for (ScanResult scanResult in scanResults) {
+      // Print Scane Result
       this.printScanResult(scanResult);
+
+      // Find OpenXC Device
       String deviceName = scanResult.advertisementData.localName.trim().toUpperCase();
       if (deviceName.contains(DEVICE_NAME_PREFIX)) {
         BluetoothDevice bluetoothDevice = scanResult.device;
         await bluetoothDevice.connect();
 
+        // Find OpenXC Service
         List<BluetoothService> bluetoothServices = await bluetoothDevice.discoverServices();
         for (BluetoothService bluetoothService in bluetoothServices) {
           if (bluetoothService.uuid.toString().toUpperCase() == OPENXC_SERVICE_UUID) {
@@ -286,21 +263,32 @@ class ConnectionConfig {
             .first;
         print('Notify Characteristic UUID: ${notifyCharacteristic.uuid.toString().toUpperCase()}');
 
-        // Listen: Read Data
+        // Keep Connected
         await notifyCharacteristic.setNotifyValue(true);
 
-        return true;
+        // Update Connection Related Variables
+        this._isConnected = true;
+        this._connectionStatusLabel = 'Connected';
+        this._connectionStatusColor = Color(0xFF9DE089);
+        this._fabLabel = 'DISCONNECT';
+        notifyListeners();
       }
     }
-    return false;
   }
 
-  Future<bool> disconnect() async {
+  // Disconnect Method
+  Future<void> disconnect() async {
     List<BluetoothDevice> bluetoothDevices = await FlutterBlue.instance.connectedDevices;
     bluetoothDevices.forEach((bluetoothDevice) async {
       await bluetoothDevice.disconnect();
     });
-    return true;
+
+    // Update Connection Related Variables
+    this._isConnected = false;
+    this._connectionStatusLabel = 'Disconnected';
+    this._connectionStatusColor = Color(0xFFDF927B);
+    this._fabLabel = 'CONNECT';
+    notifyListeners();
   }
 
   void printScanResult(ScanResult scanResult) {
@@ -325,32 +313,38 @@ class DashboardTab extends HookWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              child: Container(
-                padding: EdgeInsets.all(5.0),
-                child: ListTile(
-                  title: Text(
-                    'Messages Received',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '2020',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ),
-              ),
+            InfoCard(
+              title: 'Messages Received',
+              subtitle: '2020',
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class SettingsListTile extends StatelessWidget {
+  final IconData iconData;
+  final String title;
+  final String subtitle;
+
+  SettingsListTile({this.iconData, this.title, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: CircleAvatar(
+        child: Icon(
+          this.iconData,
+          color: Colors.white,
+        ),
+        backgroundColor: Colors.transparent,
+      ),
+      title: Text(this.title),
+      subtitle: Text(this.subtitle),
+      trailing: Icon(Icons.keyboard_arrow_right),
+      onTap: () {},
     );
   }
 }
@@ -367,44 +361,20 @@ class SettingsTab extends HookWidget {
         children: ListTile.divideTiles(
           context: context,
           tiles: [
-            ListTile(
-              leading: CircleAvatar(
-                child: Icon(
-                  Icons.account_tree,
-                  color: Colors.white,
-                ),
-                backgroundColor: Colors.transparent,
-              ),
-              title: Text('Connection'),
-              subtitle: Text('BLE • USB • Trace File'),
-              trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {},
+            SettingsListTile(
+              iconData: Icons.account_tree,
+              title: 'Connection',
+              subtitle: 'BLE • USB • Trace File',
             ),
-            ListTile(
-              leading: CircleAvatar(
-                child: Icon(
-                  Icons.save,
-                  color: Colors.white,
-                ),
-                backgroundColor: Colors.transparent,
-              ),
-              title: Text('Recording'),
-              subtitle: Text('Trace Files • Dweet.IO'),
-              trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {},
+            SettingsListTile(
+              iconData: Icons.save,
+              title: 'Recording',
+              subtitle: 'Trace Files • Dweet.IO',
             ),
-            ListTile(
-              leading: CircleAvatar(
-                child: Icon(
-                  Icons.info,
-                  color: Colors.white,
-                ),
-                backgroundColor: Colors.transparent,
-              ),
-              title: Text('About'),
-              subtitle: Text('Application • Platform'),
-              trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () {},
+            SettingsListTile(
+              iconData: Icons.info,
+              title: 'About',
+              subtitle: 'Application • Platform',
             ),
           ],
         ).toList(),
