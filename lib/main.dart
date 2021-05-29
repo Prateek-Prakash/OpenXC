@@ -325,7 +325,7 @@ class ConnectionTabVM extends ChangeNotifier {
           this._isConnected = true;
           this._isScanning = false;
           this._connectionStatusLabel = 'Connected';
-          this._connectionStatusColor = Color(0xFF81ECEC);
+          this._connectionStatusColor = Color(0xFF9DE089);
           this._fabLabel = 'DISCONNECT';
           this._viName = deviceName;
 
