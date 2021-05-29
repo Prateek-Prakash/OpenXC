@@ -240,6 +240,7 @@ class ConnectionTabVM extends ChangeNotifier {
   String _viName = 'Unknown';
   String get viName => _viName;
 
+  StreamSubscription _stateSub;
   BluetoothService _openXCService;
   BluetoothCharacteristic _writeCharacteristic;
   BluetoothCharacteristic _notifyCharacteristic;
@@ -260,6 +261,11 @@ class ConnectionTabVM extends ChangeNotifier {
       if (deviceName.contains(DEVICE_NAME_PREFIX)) {
         BluetoothDevice bluetoothDevice = scanResult.device;
         await bluetoothDevice.connect();
+
+        // Listen: State Changes
+        this._stateSub = bluetoothDevice.state.listen((state) async {
+          print('Device State: ${state.toString()}');
+        });
 
         // Find OpenXC Service
         List<BluetoothService> bluetoothServices = await bluetoothDevice.discoverServices();
@@ -312,6 +318,7 @@ class ConnectionTabVM extends ChangeNotifier {
       await bluetoothDevice.disconnect();
     });
 
+    this._stateSub?.cancel();
     this._openXCService = null;
     this._writeCharacteristic = null;
     this._notifyCharacteristic = null;
@@ -472,7 +479,6 @@ class DashboardTabVM extends ChangeNotifier {
     this._vehicleMessages.clear();
     this._messageKeys.clear();
     this._messagesMap.clear();
-    
     notifyListeners();
   }
 
