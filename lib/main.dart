@@ -4,14 +4,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:badges/badges.dart';
+import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:get_it_hooks/get_it_hooks.dart';
-
-import 'package:flutter_hooks/flutter_hooks.dart';
-
-import 'package:flutter_blue/flutter_blue.dart';
-
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 final getIt = GetIt.instance;
 void setupGetIt() {
@@ -154,8 +152,8 @@ class InfoCard extends StatelessWidget {
             subtitle: Text(
               this.subtitle,
               style: TextStyle(
-                fontWeight: FontWeight.w900,
                 fontSize: 12.5,
+                fontWeight: FontWeight.w900,
                 color: subtitleColor,
               ),
             ),
@@ -397,20 +395,27 @@ class VehicleMessageCard extends HookWidget {
               messageName,
               style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 12.5,
+                fontSize: 13.5,
               ),
             ),
             subtitle: Text(
               messageValue,
               style: TextStyle(
-                fontSize: 10.0,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            trailing: Text(
-              messageCount,
-              style: TextStyle(
-                fontWeight: FontWeight.w100,
+            trailing: Badge(
+              toAnimate: false,
+              shape: BadgeShape.square,
+              borderRadius: BorderRadius.circular(5.0),
+              badgeColor: Theme.of(context).accentColor,
+              badgeContent: Text(
+                messageCount,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w100,
+                ),
               ),
             ),
           ),
