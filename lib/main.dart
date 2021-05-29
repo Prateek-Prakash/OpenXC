@@ -119,34 +119,38 @@ class AppShellVM extends ChangeNotifier {
 }
 
 class InfoCard extends StatelessWidget {
+  final bool isVisible;
   final String title;
   final String subtitle;
   final Color subtitleColor;
 
-  InfoCard({this.title, this.subtitle, this.subtitleColor});
+  InfoCard({this.isVisible, this.title, this.subtitle, this.subtitleColor});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0.0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0),
-      ),
-      child: Container(
-        padding: EdgeInsets.all(5.0),
-        child: ListTile(
-          title: Text(
-            this.title,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
+    return Visibility(
+      visible: this.isVisible != null ? this.isVisible : true,
+      child: Card(
+        elevation: 0.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(5.0),
+          child: ListTile(
+            title: Text(
+              this.title,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-          subtitle: Text(
-            this.subtitle,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
-              color: subtitleColor,
+            subtitle: Text(
+              this.subtitle,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 12.5,
+                color: subtitleColor,
+              ),
             ),
           ),
         ),
@@ -177,6 +181,12 @@ class ConnectionTab extends HookWidget {
               title: 'Connection Status',
               subtitle: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.connectionStatusLabel),
               subtitleColor: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.connectionStatusColor),
+            ),
+            SizedBox(height: 10.0),
+            InfoCard(
+              isVisible: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.isConnected),
+              title: 'VI Name',
+              subtitle: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.viName),
             ),
           ],
         ),
@@ -222,6 +232,9 @@ class ConnectionTabVM extends ChangeNotifier {
 
   String _fabLabel = 'CONNECT';
   String get fabLabel => _fabLabel;
+
+  String _viName = 'Unknown';
+  String get viName => _viName;
 
   // Connect Method
   Future<void> connect() async {
@@ -271,6 +284,7 @@ class ConnectionTabVM extends ChangeNotifier {
         this._connectionStatusLabel = 'Connected';
         this._connectionStatusColor = Color(0xFF9DE089);
         this._fabLabel = 'DISCONNECT';
+        this._viName = deviceName;
         notifyListeners();
       }
     }
@@ -288,6 +302,7 @@ class ConnectionTabVM extends ChangeNotifier {
     this._connectionStatusLabel = 'Disconnected';
     this._connectionStatusColor = Color(0xFFDF927B);
     this._fabLabel = 'CONNECT';
+    this._viName = 'Unknown';
     notifyListeners();
   }
 
