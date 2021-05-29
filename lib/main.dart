@@ -190,11 +190,11 @@ class ConnectionTab extends HookWidget {
               trailing: Visibility(
                 visible: useWatchOnly((ConnectionTabVM connectionTabVM) => connectionTabVM.isScanning),
                 child: SizedBox(
-                  width: 20.0,
-                  height: 20.0,
-                  child: SpinKitCircle(
+                  width: 25.0,
+                  height: 25.0,
+                  child: SpinKitRipple(
                     color: Colors.white,
-                    size: 20.0,
+                    size: 25.0,
                   ),
                 ),
               ),
@@ -269,6 +269,8 @@ class ConnectionTabVM extends ChangeNotifier {
       await this.disconnect();
 
       this._isScanning = true;
+      this._connectionStatusLabel = 'Scanning';
+      this._connectionStatusColor = Color(0xFFFFEAA7);
       notifyListeners();
 
       List<ScanResult> scanResults = await FlutterBlue.instance.scan(timeout: Duration(seconds: 5)).toList();
@@ -323,7 +325,7 @@ class ConnectionTabVM extends ChangeNotifier {
           this._isConnected = true;
           this._isScanning = false;
           this._connectionStatusLabel = 'Connected';
-          this._connectionStatusColor = Color(0xFF9DE089);
+          this._connectionStatusColor = Color(0xFF81ECEC);
           this._fabLabel = 'DISCONNECT';
           this._viName = deviceName;
 
@@ -333,6 +335,8 @@ class ConnectionTabVM extends ChangeNotifier {
 
       if (this._isScanning) {
         this._isScanning = false;
+        this._connectionStatusLabel = 'Disconnected';
+        this._connectionStatusColor = Color(0xFFDF927B);
         notifyListeners();
       }
     }
