@@ -446,7 +446,17 @@ class DashboardTab extends HookWidget {
         ],
       ),
       body: Container(
-        child: ListView.builder(
+          child: Visibility(
+        visible: useWatchOnly((DashboardTabVM dashboardTabVM) => dashboardTabVM.messageKeys.isEmpty),
+        child: Center(
+          child: Text(
+            '• NO VEHICLE MESSAGES •',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        replacement: ListView.builder(
           padding: EdgeInsets.all(5.0),
           itemCount: useWatchOnly((DashboardTabVM dashboardTabVM) => dashboardTabVM.messageKeys.length),
           itemBuilder: (context, index) {
@@ -455,7 +465,7 @@ class DashboardTab extends HookWidget {
             );
           },
         ),
-      ),
+      )),
     );
   }
 }
