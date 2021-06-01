@@ -551,8 +551,8 @@ class DashboardTabVM extends ChangeNotifier {
           this._messagesMap[vehicleMessage.name].value = vehicleMessage.value;
           this._messagesMap[vehicleMessage.name].count++;
         } else {
-          this._messageKeys = this._messagesMap.keys.toList()..sort();
           this._messagesMap[vehicleMessage.name] = vehicleMessage;
+          this._messageKeys = this._messagesMap.keys.toList()..sort();
         }
         print('JSON Data: $decodedMessage');
       } catch (exception) {}
