@@ -90,9 +90,9 @@ class AppShellView extends HookWidget {
 class AppShellVM extends ChangeNotifier {
   // Tab Views
   List<Widget> _navTabs = [
-    ConnectionTab(),
-    DashboardTab(),
-    SettingsTab(),
+    ConnectionTabView(),
+    DashboardTabView(),
+    SettingsTabView(),
   ];
   List<Widget> get navTabs => _navTabs;
 
@@ -165,7 +165,7 @@ class InfoCard extends StatelessWidget {
   }
 }
 
-class ConnectionTab extends HookWidget {
+class ConnectionTabView extends HookWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -429,7 +429,7 @@ class VehicleMessageCard extends HookWidget {
   }
 }
 
-class DashboardTab extends HookWidget {
+class DashboardTabView extends HookWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -587,7 +587,7 @@ class SettingsListTile extends StatelessWidget {
   }
 }
 
-class SettingsTab extends HookWidget {
+class SettingsTabView extends HookWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
