@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 
 import 'package:badges/badges.dart';
 import 'package:flutter_blue/flutter_blue.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:get_it_hooks/get_it_hooks.dart';
